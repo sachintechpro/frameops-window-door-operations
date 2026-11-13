@@ -22,6 +22,22 @@ Features include scheduled appointments, calendar dates, supplier ETAs and delay
 
 The new [Operating Guide](OPERATING_GUIDE.md) walks through all modules and the [Production Readiness Checklist](PRODUCTION_READINESS.md) documents the essential security, integrations and operations requirements for real customer use.
 
+## FrameOps 2.3 — Consumer storefront and browser-only experience
+
+The **Westhaven Window & Door Co.** customer storefront uses a wholly fictional catalog inspired by the product/service structures of window and door installers and suppliers. The 17 original sample listings cover vinyl, fiberglass, aluminum, wood-clad, sliding, hung, casement, awning, picture, bay/bow, entry, patio, folding-door, moving-glass and skylight products. **CanyonVale, SolaraForm, AeroLoom and HaloLight** are invented brands. The prices are **illustrative ranges, not real offers or published prices from reference businesses**; measurement, installation scope and permits determine final costs.
+
+The shopper can search and filter products, review materials and styles, assemble a quantity-based shortlist, and open an estimate-first inquiry. The inquiry launches a **client-side fictional project**. The user can switch roles to experience lead qualification, mock quote approval, a simulated advance payment, supplier acceptance/delivery, installation, QA, satisfaction feedback, appointment rescheduling, cancellation and role-specific notification inboxes. Changes are stored in the browser's `localStorage`; `BroadcastChannel` and storage events synchronize other tabs on **the same device and browser**. **No money moves, no real communications are sent, and the simulated project is not shared across users/devices.** The independent legacy operations module retains its original fictional SQLite demo data.
+
+### Business & Social Settings
+
+In the left navigation choose **Business & Social Settings**, enter official business profile URLs for **Facebook, X, Medium, LinkedIn, YouTube, Instagram and TikTok**, then enable each entry for publication. Enabled, validated HTTPS links appear near the top and at the bottom of the customer storefront. The browser-local configuration is a UX simulation, **not** an account-wide setting: another browser or device does not inherit it. Real deployment requires authenticated business settings on a persistent server, otherwise every user may only see their own local version.
+
+Original illustrations are bundled as SVG files; there are no copied manufacturer marks or product images. The optional Google review invitation in the existing operations demo is not an actual posted review.
+
+![FrameOps 2.3 mobile storefront](assets/storefront-products-mobile.png)
+
+![FrameOps social settings on mobile](assets/business-social-settings-mobile.png)
+
 ## What the application demonstrates
 
 | Journey | Business capability |
@@ -67,6 +83,8 @@ The design draws on **Lean flow and value-stream principles**—removing waiting
 4. Use the next-stage action in a job record. A successful action updates the shared stage, creates the next department's task, and generates in-app notifications.
 5. Test the blockers: procurement requires funding, scheduling requires materials and any applicable permit or insurance checks, and closeout requires passed QA and reconciled payments.
 6. Open **Ask FrameOps** to learn a workflow, and use **Documents & Invoices** or **Customer Service** to explore trackable, post-installation records.
+7. Open **Business & Social Settings** to enable fictional social profile URLs and preview them on the storefront.
+8. In **Customer Storefront**, select items and create a fictional estimate request; then use **Live Journey Simulator** to test sample payments, rescheduling and cross-role alerts.
 
 ![FrameOps mobile workspace](assets/mobile.png)
 

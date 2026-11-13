@@ -49,3 +49,12 @@
 ## Suggested definition of done for production
 
 A real customer should be able to progress from inquiry through customer support without unsupported manual handoffs **while retaining explicit exceptions and human approvals**. A release is production-ready only after engineering security sign-off, privacy and compliance approval, operational UAT, integration tests, environment resilience, ownership of runbooks, and positive rollback drills. This prototype is a reference implementation for planning that work, not a substitute for it.
+
+
+## Additional storefront and social publishing requirements (v2.3)
+
+- Replace browser-only `localStorage` simulations with authenticated, account-scoped, permission-checked business records only when developing a real application.
+- Distinguish quote requests from binding offers; real tax, permit, delivery, labor and financing policies require confirmation for every order.
+- For real-time customer/vendor/installer notification: persist event records, publish through a broker or database event stream, and deliver authorized messages over WebSockets/SSE plus verified email/SMS providers as appropriate. This demo intentionally does **not** contact external stakeholders.
+- Protect business social-profile settings through server-authorized Admin roles and content validation; support company-level configuration, review and audit history, preview and publish controls.
+- Never ask for social media passwords or impersonate real external social pages. Configured URLs should open public HTTPS profile links only.

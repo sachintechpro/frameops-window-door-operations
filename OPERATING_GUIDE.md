@@ -4,7 +4,7 @@ Start at **Admin Dashboard**. All records are fictional and may reset. Use **Wor
 
 ## Navigate from the customer side
 
-1. **Customer Storefront:** explore window/door products and submit a fictional consultation request. FrameOps creates a lead with a Front Desk task.
+1. **Customer Storefront:** explore window/door products and submit a fictional consultation request. The new estimate-first storefront opens a browser-local simulated project with Front Desk, Sales and customer notifications. Legacy admin lead creation remains a separate fictional SQLite demo workflow.
 2. **Front Desk / Leads & Sales:** open the newly created record, qualify the lead, book the measurement and record the next step.
 3. **Measurements:** add openings with sizes (inches), frame/glazing and field notes. Complete the measurement stage so Sales can prepare the quote.
 4. **Leads & Sales:** record the proposed price, homeowner approval and contract acceptance. The demo does not execute a real legal signature.
@@ -28,3 +28,13 @@ Start at **Admin Dashboard**. All records are fictional and may reset. Use **Wor
 ## Documentation
 
 See `DESIGN.md` for the original operational concept, `PRODUCTION_READINESS.md` for mandatory architecture/security/integration work, and `TESTING.md` for regression validation. Do not use real homeowner addresses, contacts, payment information, or documents in this public environment.
+
+## Customer storefront & local demonstration journey (v2.3)
+
+1. **Customer Storefront:** search among 17 fictional products, filter material/category, compare the indicative installed-price ranges, add desired units and submit an example estimate inquiry. Use invented names and addresses only.
+2. **Live Journey Simulator:** after a new quote request, change **Working as** to Front Desk and qualify the lead; Sales and Measurement Tech can take subsequent steps; the customer can approve the fictional quote and click **Pay sample advance** without entering any card details.
+3. **Handoffs:** the fictitious payment moves the project to supplier preparation and adds notifications for Accounting, Financing, Sales, Vendor, Installation, and customer. Changes to delivery ETA or installation dates (including cancellation/rebooking) route in-app alerts to the affected departments.
+4. **Browser-local “real time”:** other tabs of the same browser/device receive changes through localStorage events and BroadcastChannel. Other devices are **not** linked, and the backend does not process simulated payments, scheduling or notifications.
+5. **Business & Social Settings:** add the actual business’s own HTTPS profile links on Facebook, X, Medium, LinkedIn, YouTube, Instagram and TikTok. Enable only the desired sites; preview them on the customer storefront. Settings persist on this device/browser only. No social network credentials or APIs are used.
+
+**Security:** The business settings and role dropdown are not protected by authentication in this public demo. There are no real business owners, logged-in customers, real deposits, tax calculations, supplier integrations or externally delivered notifications.

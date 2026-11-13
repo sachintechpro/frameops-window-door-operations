@@ -16,6 +16,12 @@ public/
     index.html
     app.js
     ops_ui.js
+    catalog.js
+    catalog.json
+    storefront.js
+    demo_journey.js
+    business_settings.js
+    images/ (17 original SVG product illustrations)
     styles.css
 assets/
     dashboard.png
@@ -23,12 +29,16 @@ assets/
     mobile.png
     operations-dashboard.png
     operations-mobile.png
+    storefront-products-mobile.png
+    business-social-settings-mobile.png
 data/
     .gitkeep
 tests/
     test_app.py
     test_operations.py
     browser_smoke.py
+    browser_storefront_smoke.py
+    test_storefront_files.py
 .github/
     workflows/test.yml
 ```
@@ -79,3 +89,8 @@ Push changes to the same repository on `main`. Render should redeploy automatica
 The new backend module `operations.py` uses only Python standard library and is initialized by `server.py`. `public/ops_ui.js` supplies module navigation, guided help, appointment status forms, alerts and invoice printing. The Render settings remain unchanged. Optional `GOOGLE_REVIEW_URL` may be set to the business's **verified official Google review page**, never an invented URL; the app hides the customer review link when missing. `PUBLIC_DEMO=1` must stay enabled for this public fictional-data version.
 
 Read [PRODUCTION_READINESS.md](PRODUCTION_READINESS.md) before handling real customer information. This version does not authenticate users, send external notifications or persist reliable production data.
+
+
+## FrameOps 2.3 (frontend-only store journey)
+
+No additional Render environment variables, external payment services, webhook secrets, social credentials or subscriptions are required. The storefront, social link setup and fictional advance-payment/notification scenario use browser-local state. Deployed users will not share those simulated records or configuration across devices.

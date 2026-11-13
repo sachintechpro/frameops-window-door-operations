@@ -28,3 +28,12 @@ These tests are not a security assessment and do not constitute end-to-end verif
 Run `python -m unittest discover -s tests -v` for the original HTTP smoke checks **plus** integration scenarios covering scheduling/ETA delays, cross-team notification generation, invoice creation/printing and role checks, complete fictional lead-to-warranty-and-satisfaction workflow, service tickets, and contextual guide answers.
 
 `tests/browser_smoke.py` is an additional developer-only Playwright/Chromium DOM smoke check using self-contained HTML, CSS and JavaScript (with mocked bootstrap data) to exercise the desktop and mobile layout, navigation, storefront, modal and guide UI. It is not part of GitHub Actions because browser binaries are not provisioned there.
+
+
+## FrameOps 2.3 customer storefront tests
+
+`python -m unittest discover -s tests -v` validates the 17-product fictional catalog, supported categories, original SVG product illustrations, social-settings interface availability and existing backend workflows.
+
+`python tests/browser_storefront_smoke.py` runs an additional developer-only Playwright/Chromium simulation. It checks product browsing, the seven social settings, invalid social domains, enabled/disabled storefront links, simulated storage-event refresh, a storefront quote inquiry, generated Front Desk/Sales notifications, and narrow mobile layout with no JavaScript errors. It uses inlined assets and API stubs because some browser test environments block local network URLs; it is *not* a claim of multi-device or production notification testing.
+
+CI also runs Node syntax checks against the customer-facing JavaScript files.
