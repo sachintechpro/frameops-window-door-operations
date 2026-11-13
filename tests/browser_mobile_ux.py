@@ -73,7 +73,8 @@ def inspect_page(browser, width, height):
         # Verify role navigation still works rather than only inspecting CSS.
         page.locator("#mobile-menu").click()
         assert "open" in (page.locator("#sidebar").get_attribute("class") or "")
-        page.locator("#mobile-menu").click()
+        # The open navigation intentionally covers the menu; dismiss via backdrop.
+        page.mouse.click(width-8, height//2)
         assert "open" not in (page.locator("#sidebar").get_attribute("class") or "")
         guide.click()
         assert page.locator("#ops-guide-panel").is_visible()
