@@ -1,6 +1,6 @@
 # FrameOps — Window & Door Operations
 
-**A working, multi-role operations management prototype for residential window and door installation businesses.**
+**A working cross-functional operations command center for residential window and door installation businesses.**
 
 **[Explore the live FrameOps application](https://frameops-operations.onrender.com/)** · [Source repository](https://github.com/sachintechpro/frameops-window-door-operations)
 
@@ -9,6 +9,18 @@ FrameOps illustrates how one end-to-end value stream can replace disconnected sp
 > **Interactive portfolio demo, not a production customer system.** All included homeowners, addresses, suppliers, and financial records are fictional. Anyone using the public demo must enter fictional data only. Role switching demonstrates journeys and **does not provide authentication or enforce real access control**.
 
 ![FrameOps operations dashboard](assets/dashboard.png)
+
+## FrameOps 2.0 — operations command center
+
+A coordinated dashboard now organizes these customer and departmental workspaces: **Customer Storefront, Admin Dashboard, Front Desk, Leads & Sales, Measurements, Vendors, Installation, Financing, Accounting, Warranty, Customer Service, Documents & Invoices**, plus the shared **Jobs, Work Queue, Notifications and Value Stream** views.
+
+Features include scheduled appointments, calendar dates, supplier ETAs and delay reasons, priority banners, contextual tooltips, a deterministic **Ask FrameOps** operating guide, printable sample invoices, customer service tickets with response targets, customer satisfaction records, and optional Google review-invitation status. Google reviews are customer-authored and remain on Google's own platform; this app does not post or verify them.
+
+![FrameOps 2.0 customer service dashboard](assets/operations-dashboard.png)
+
+![FrameOps 2.0 mobile workspace](assets/operations-mobile.png)
+
+The new [Operating Guide](OPERATING_GUIDE.md) walks through all modules and the [Production Readiness Checklist](PRODUCTION_READINESS.md) documents the essential security, integrations and operations requirements for real customer use.
 
 ## What the application demonstrates
 
@@ -24,7 +36,7 @@ FrameOps illustrates how one end-to-end value stream can replace disconnected sp
 
 ![Detailed job workspace](assets/job-workspace.png)
 
-### Nine operational perspectives
+### Operational role perspectives
 
 - **Owner / Admin:** overview, work-in-progress, bottlenecks and escalations.
 - **Front Desk:** inquiries, qualification, appointment follow-ups.
@@ -35,6 +47,9 @@ FrameOps illustrates how one end-to-end value stream can replace disconnected sp
 - **Installation Manager:** orders, material readiness, permits, insurance and schedule.
 - **Service Technician:** installation completion, punch-list/QA and warranty follow-up.
 - **Homeowner:** selected milestones, proposal/contract acknowledgement and service requests.
+- **Financing:** mock external funding decisions and procurement readiness.
+- **Customer Service:** case coordination, satisfaction follow-up and issue resolution.
+- **Warranty Coordinator:** warranty follow-up, review invitations and service recovery.
 
 ### Delivery and project-management thinking
 
@@ -46,11 +61,12 @@ The design draws on **Lean flow and value-stream principles**—removing waiting
 
 ## Explore
 
-1. Start with **Overview** and inspect the eight seeded fictional homeowner jobs.
+1. Start with **Admin Dashboard** and inspect the eight seeded fictional homeowner jobs.
 2. Open **Leads & Jobs**, select any record, and explore the complete journey, product measurements, financials, documents, and activity history.
 3. Change **Working as** to experience the front desk, sales, field, supplier, accounting, and homeowner roles.
 4. Use the next-stage action in a job record. A successful action updates the shared stage, creates the next department's task, and generates in-app notifications.
 5. Test the blockers: procurement requires funding, scheduling requires materials and any applicable permit or insurance checks, and closeout requires passed QA and reconciled payments.
+6. Open **Ask FrameOps** to learn a workflow, and use **Documents & Invoices** or **Customer Service** to explore trackable, post-installation records.
 
 ![FrameOps mobile workspace](assets/mobile.png)
 
@@ -60,7 +76,7 @@ The prototype uses Python's standard-library HTTP server, SQLite, and plain HTML
 
 **Before real customer use:** implement authentication, enforced per-role and per-homeowner authorization, real audit logs and consent management, private document storage, backed-up database, secured communications, payment provider, approved financing and e-signature integrations, and jurisdiction-specific installation/permit/warranty rules.
 
-For detailed scope, domain entities, workflow rules and future roadmap, see [DESIGN.md](DESIGN.md).
+For detailed scope, domain entities, workflow rules and future roadmap, see [DESIGN.md](DESIGN.md), [OPERATING_GUIDE.md](OPERATING_GUIDE.md), and [PRODUCTION_READINESS.md](PRODUCTION_READINESS.md).
 
 <details>
 <summary>Local development</summary>

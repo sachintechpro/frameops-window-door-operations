@@ -21,3 +21,10 @@ See `render.yaml` and `RENDER_SETUP.md` for a free Render Python web service wit
 ## Production disclaimer
 
 These tests are not a security assessment and do not constitute end-to-end verification of all business rules. The publicly accessible application has shared demo state without real authentication. Only fictional sample information may be entered.
+
+
+## FrameOps 2.0 regression coverage
+
+Run `python -m unittest discover -s tests -v` for the original HTTP smoke checks **plus** integration scenarios covering scheduling/ETA delays, cross-team notification generation, invoice creation/printing and role checks, complete fictional lead-to-warranty-and-satisfaction workflow, service tickets, and contextual guide answers.
+
+`tests/browser_smoke.py` is an additional developer-only Playwright/Chromium DOM smoke check using self-contained HTML, CSS and JavaScript (with mocked bootstrap data) to exercise the desktop and mobile layout, navigation, storefront, modal and guide UI. It is not part of GitHub Actions because browser binaries are not provisioned there.

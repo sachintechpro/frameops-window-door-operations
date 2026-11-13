@@ -12,13 +12,14 @@ from datetime import datetime, timedelta, timezone
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from urllib.parse import urlparse, unquote
 from uuid import uuid4
+from operations import initialize_ops, dashboard as ops_dashboard, job_operations, mutation as ops_mutation, guide as ops_guide, sync_milestone, printable_invoice
 
 ROOT = Path(__file__).resolve().parent
 PUBLIC = ROOT / "public"
 DB_PATH = Path(os.getenv("DB_PATH", str(ROOT / "data" / "frameops.db")))
 UPLOAD_DIR = Path(os.getenv("UPLOAD_DIR", str(ROOT / "data" / "uploads")))
 PUBLIC_DEMO = os.getenv('PUBLIC_DEMO', '0') == '1'
-ROLES = ["Admin", "Front Desk", "Sales", "Measurement Tech", "Accountant", "Vendor", "Installation Manager", "Service Tech", "Homeowner"]
+ROLES = ["Admin", "Front Desk", "Sales", "Measurement Tech", "Accountant", "Vendor", "Installation Manager", "Service Tech", "Homeowner", "Financing", "Customer Service", "Warranty Coordinator"]
 STAGES = ["New Lead", "Qualified", "Measurement Scheduled", "Measurements Complete", "Proposal Sent", "Proposal Approved", "Contract Signed", "Funding Cleared", "Materials Ordered", "Materials Received", "Installation Scheduled", "Installed", "QA Passed", "Closed"]
 STAGE_IDX = {s:i for i,s in enumerate(STAGES)}
 ALLOWED_ACTIONS = {
@@ -29,7 +30,7 @@ ALLOWED_ACTIONS = {
     "send_proposal": ["Sales"],
     "accept_proposal": ["Sales", "Homeowner"],
     "sign_contract": ["Sales", "Homeowner"],
-    "finance_update": ["Accountant"],
+    "finance_update": ["Accountant", "Financing"],
     "record_payment": ["Accountant"],
     "place_order": ["Installation Manager"],
     "materials_received": ["Vendor", "Installation Manager"],
@@ -39,7 +40,7 @@ ALLOWED_ACTIONS = {
     "close_job": ["Accountant"],
     "insurance_update": ["Installation Manager", "Accountant"],
     "permit_update": ["Installation Manager"],
-    "service_request": ["Homeowner", "Front Desk", "Service Tech"],
+    "service_request": ["Homeowner", "Front Desk", "Service Tech", "Customer Service", "Warranty Coordinator"],
     "note": ROLES,
     "set_priority": ["Front Desk", "Sales"],
 }
@@ -123,6 +124,7 @@ def initialize():
         n = con.execute("SELECT COUNT(*) FROM jobs").fetchone()[0]
         if not n:
             seed(con)
+        initialize_ops(con)
 
 
 def task(con, job_id, role, title, code, detail="", days=2):
@@ -328,6 +330,7 @@ def do_action(con, job_id, action, payload, actor):
         con.execute("UPDATE jobs SET priority=? WHERE id=?",(p,job_id))
         label='Priority updated'; detail=f'Priority: {p}'; roles=['Sales','Front Desk']
     event(con,job_id,label,detail,actor,roles)
+    sync_milestone(con,job_id,action,payload,actor)
     con.execute('UPDATE jobs SET updated_at=? WHERE id=?',(now(),job_id))
     return {'ok':True,'message':label}
 
@@ -422,13 +425,27 @@ class Handler(BaseHTTPRequestHandler):
     def do_GET(self):
         p=unquote(urlparse(self.path).path)
         try:
+            if p=='/api/ops/dashboard':
+                with db() as con: payload = ops_dashboard(con)
+                return self.send_json(payload)
+            m=re.fullmatch(r'/api/ops/jobs/(F-\d+)',p)
+            if m:
+                with db() as con: data=job_operations(con,m.group(1))
+                return self.send_json(data)
+            m=re.fullmatch(r'/api/ops/invoices/(\d+)/print',p)
+            if m:
+                with db() as con: html=printable_invoice(con,m.group(1))
+                if html is None:return self.send_json({'error':'Invoice not found'},404)
+                payload=html.encode('utf-8')
+                self.send_response(200);self.headers_common('text/html; charset=utf-8',len(payload));self.end_headers();self.wfile.write(payload);return
             if p=='/api/bootstrap':
                 with db() as con:
                     jobs=list_jobs(con)
                     tasks=[dict(x) for x in con.execute("SELECT t.*,j.homeowner,j.address,j.stage FROM tasks t JOIN jobs j ON j.id=t.job_id WHERE t.status='Open' ORDER BY t.due_date LIMIT 120")]
                     ns=[dict(x) for x in con.execute('SELECT * FROM notifications ORDER BY id DESC LIMIT 150')]
                     events=[dict(x) for x in con.execute('SELECT e.*,j.homeowner FROM events e JOIN jobs j ON j.id=e.job_id ORDER BY e.id DESC LIMIT 24')]
-                return self.send_json({'jobs':jobs,'tasks':tasks,'notifications':ns,'events':events,'roles':ROLES,'stages':STAGES,'demo':True})
+                    operations=ops_dashboard(con)
+                return self.send_json({'jobs':jobs,'tasks':tasks,'notifications':ns,'events':events,'roles':ROLES,'stages':STAGES,'demo':True,'operations':operations})
             m=re.fullmatch(r'/api/jobs/(F-\d+)',p)
             if m:
                 with db() as con: j=job_detail(con,m.group(1))
@@ -459,6 +476,11 @@ class Handler(BaseHTTPRequestHandler):
         p=urlparse(self.path).path
         try:
             data=self.payload()
+            if p=='/api/ops/guide':
+                return self.send_json(ops_guide(data.get('question',''),data.get('context',''),data.get('role','Admin')))
+            if p.startswith('/api/ops/'):
+                with db() as con: result=ops_mutation(con,p,data)
+                return self.send_json(result,201 if p in ('/api/ops/appointments','/api/ops/invoices','/api/ops/tickets') else 200)
             if p=='/api/jobs':
                 homeowner=str(data.get('homeowner','')).strip(); address=str(data.get('address','')).strip()
                 require(homeowner and address,'Homeowner name and address are required')
