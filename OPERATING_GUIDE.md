@@ -38,16 +38,3 @@ See `DESIGN.md` for the original operational concept, `PRODUCTION_READINESS.md` 
 5. **Business & Social Settings:** add the actual business’s own HTTPS profile links on Facebook, X, Medium, LinkedIn, YouTube, Instagram and TikTok. Enable only the desired sites; preview them on the customer storefront. Settings persist on this device/browser only. No social network credentials or APIs are used.
 
 **Security:** The business settings and role dropdown are not protected by authentication in this public demo. There are no real business owners, logged-in customers, real deposits, tax calculations, supplier integrations or externally delivered notifications.
-
-
-## Version 2.4 — Customer fast-quote and staff schedule simulation
-
-**Customer storefront first**: select one or more fictional products → `Instant quote` → enter only invented example.com contact details and a `555` phone number → choose measurement and target-installation arrival windows → type a matching fictional signature name → accept the demo terms → select the simulated payment method → submit. The resulting browser-local project immediately records an advance of at least 10%, reserves both dates and notifies the assigned measurement technician, customer, owner, Sales, Front Desk, Accounting, Vendor and impacted Installation staff through in-app role inboxes.
-
-**Customer Project Portal**: monitor the project stage, quote and advance/balance, confirm or reschedule appointments, cancel with a reason, open a printable sample agreement/invoice/receipt/confirmation, use fictional SMS/email CTA previews and review warranty after closure. Installation reservation remains contingent on actual measurement, materials and readiness in a real workflow.
-
-**Staff Console**: click `Staff workspace` from the customer site, then select `Quote & Schedule Console`. Sales/Admin can negotiate **0–5%** before the customer confirms a quote. The price engine protects supplier cost × 1.35 × 1.10 after discounts. Measurement Tech marks measurements complete; Vendor confirms materials or records delivery delays; Installation Manager / Service Tech closes field work. Simulate a final payment before activating a sample warranty.
-
-**Appointments**: the demo generates 24-hour and 1-hour reminder previews only while the browser is open, or when using the demo-clock controls. Rescheduling or cancellation invalidates prior reminder keys and creates new role-specific events. No SMS or email is sent, and separate browsers/devices do not share the same project. Real reminders need a backend scheduler, authoritative timezone, customer consent, delivery provider and idempotent retry mechanism.
-
-**Role access is a simulation**: a dropdown does not authenticate customers or staff. No financial details, actual payment cards or real signatures should be entered. Browser-stored records are fictional and intended for interface testing only.

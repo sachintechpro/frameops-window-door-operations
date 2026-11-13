@@ -37,12 +37,3 @@ Run `python -m unittest discover -s tests -v` for the original HTTP smoke checks
 `python tests/browser_storefront_smoke.py` runs an additional developer-only Playwright/Chromium simulation. It checks product browsing, the seven social settings, invalid social domains, enabled/disabled storefront links, simulated storage-event refresh, a storefront quote inquiry, generated Front Desk/Sales notifications, and narrow mobile layout with no JavaScript errors. It uses inlined assets and API stubs because some browser test environments block local network URLs; it is *not* a claim of multi-device or production notification testing.
 
 CI also runs Node syntax checks against the customer-facing JavaScript files.
-
-
-## FrameOps 2.4 consumer-first checkout verification
-
-- `node --test tests/checkout_rules.test.js` checks all 17 products, the 35% protected supplier markup plus 10% built-in service charge, discount caps, minimum 10% fictional advance, signature/contact validation, appointment creation, recipient-specific notifications, reschedules, cancellation and reminder handling.
-- `python tests/browser_fast_checkout.py` runs real desktop (1440 px) and phone-sized (390 px) Chromium DOM checks for product selection, calculated quote, fictional advance, paperless agreement, customer portal, visit confirmation, rescheduling, scheduling inbox, reminder previews, and horizontal overflow. The browser harness mocks bootstrap HTTP only and uses generated in-memory browser storage; it does not confirm actual email/SMS delivery or cross-device coordination.
-- `python tests/browser_storefront_smoke.py` still tests the seven social profiles, URL host validation, enabled/disabled storefront links and responsive social settings.
-- `python tests/browser_smoke.py` checks legacy operations roles, administrative dashboard, help chat, customer navigation and service workflows.
-- `python -m unittest discover -s tests -v` verifies the original public HTTP/server and operational workflows. GitHub Actions runs those tests and Node pricing/discount rules; Chromium smoke tests are developer-only because browser binaries are not installed in CI.

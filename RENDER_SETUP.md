@@ -21,7 +21,6 @@ public/
     storefront.js
     demo_journey.js
     business_settings.js
-    quick_checkout.js
     images/ (17 original SVG product illustrations)
     styles.css
 assets/
@@ -40,8 +39,6 @@ tests/
     browser_smoke.py
     browser_storefront_smoke.py
     test_storefront_files.py
-    checkout_rules.test.js
-    browser_fast_checkout.py
 .github/
     workflows/test.yml
 ```
@@ -97,8 +94,3 @@ Read [PRODUCTION_READINESS.md](PRODUCTION_READINESS.md) before handling real cus
 ## FrameOps 2.3 (frontend-only store journey)
 
 No additional Render environment variables, external payment services, webhook secrets, social credentials or subscriptions are required. The storefront, social link setup and fictional advance-payment/notification scenario use browser-local state. Deployed users will not share those simulated records or configuration across devices.
-
-
-## FrameOps 2.4 automatic deployment
-
-The same existing `frameops-operations` Render Python service must continue to deploy from `main`. Do not create a second service. The new `public/quick_checkout.js` module, public storefront and quote/portal workflows are static client-side assets served by the existing Python server. No payment, SMS, email, calendar, signing or external account credentials are required or used. All sample customer state is local to the browser; keep `PUBLIC_DEMO=1`. Visit the root `/` to enter the consumer storefront first, and use **Staff workspace** to return to the company operations console.

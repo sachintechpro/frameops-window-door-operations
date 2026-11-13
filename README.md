@@ -1,30 +1,12 @@
 # FrameOps — Window & Door Operations
 
-**A customer-first window and door storefront connected to a fictional cross-functional operations command center.**
+**A working cross-functional operations command center for residential window and door installation businesses.**
 
 **[Explore the live FrameOps application](https://frameops-operations.onrender.com/)** · [Source repository](https://github.com/sachintechpro/frameops-window-door-operations)
 
 FrameOps illustrates how one end-to-end value stream can replace disconnected spreadsheets, phone calls, and handoffs with a shared homeowner/job record, visible dependencies, and accountable work queues.
 
 > **Interactive portfolio demo, not a production customer system.** All included homeowners, addresses, suppliers, and financial records are fictional. Anyone using the public demo must enter fictional data only. Role switching demonstrates journeys and **does not provide authentication or enforce real access control**.
-
-## FrameOps 2.4 — Fast quote → advance → immediate booking → paperless portal
-
-**The public app now opens directly to Westhaven's consumer storefront.** Homeowners choose fictional windows, patio doors, entry doors and skylights from illustrated product cards, see a calculated **instant all-in sample quote**, type a demo agreement acknowledgement, simulate paying **at least 10% advance**, and reserve measurement and installation dates in one checkout. Installation is reserved immediately, but **conditional on verified measurements and product/crew readiness**, not falsely guaranteed.
-
-Customer follow-through is contained in the redesigned **Customer Project Portal**: order summary, receipts, sample invoice, fictional signed agreement and schedule confirmation, simulated payment method, outstanding balance/pay button, confirmation/rescheduling/cancellation controls, job timeline and closeout warranty. Printable documents can be saved to PDF using the browser. Simulated email and SMS previews include actionable buttons for confirmation, rescheduling and payments. **No actual messages are delivered and no funds move.**
-
-The staff-side **Quote & Schedule Console** contains a product cost calculator, negotiated sales discounts (0–5%), minimum-margin enforcement, measurement technician assignment, the owner/field role inboxes, supplier delays, installation readiness and simulated 24-hour/1-hour appointment reminders. Reminders are evaluated while a demo browser is open or through demo-clock controls; they do **not** run as a background messaging service.
-
-**Internal price rule:** fictional supplier cost × 1.45 standard product markup × 1.10 service charge; sales may negotiate up to 5% discount but the final price can never fall below **supplier cost × 1.35 × 1.10**. The 10% minimum advance is applied to the **final quote**. Supplier cost and margin details are shown only in the simulated staff view, which **is not authenticated**.
-
-All quote, payment, signature, scheduling, social and message state is in browser `localStorage`; `BroadcastChannel` can synchronize tabs on the same origin/browser. **No cross-device or cross-user synchronization**, verified identity, legally valid e-signature, real card processing, calendar booking, persistent shared documents or true email/SMS delivery exists. Never enter real contact or payment information.
-
-![FrameOps 2.4 customer storefront](assets/consumer-storefront-desktop.png)
-
-![FrameOps 2.4 fast quote](assets/consumer-fast-quote-desktop.png)
-
-![FrameOps 2.4 paperless portal](assets/consumer-portal-desktop.png)
 
 ![FrameOps operations dashboard](assets/dashboard.png)
 
@@ -95,14 +77,14 @@ The design draws on **Lean flow and value-stream principles**—removing waiting
 
 ## Explore
 
-1. **Start on the new consumer storefront**: add two sample products, open **Instant quote**, accept the paperless demo agreement, simulate the minimum 10% advance and choose measurement and installation windows.
-2. Review the resulting **Customer Project Portal**: confirm visits, reschedule or cancel an appointment, simulate remaining payment, open printable sample documents and inspect SMS/email previews.
-3. Select **Staff workspace** and **Quote & Schedule Console**; change **Working as** to Sales, Measurement Tech, Vendor or Installation Manager to see each role's responsibilities. Try a negotiated Sales discount before a new checkout.
+1. Start with **Admin Dashboard** and inspect the eight seeded fictional homeowner jobs.
+2. Open **Leads & Jobs**, select any record, and explore the complete journey, product measurements, financials, documents, and activity history.
+3. Change **Working as** to experience the front desk, sales, field, supplier, accounting, and homeowner roles.
 4. Use the next-stage action in a job record. A successful action updates the shared stage, creates the next department's task, and generates in-app notifications.
 5. Test the blockers: procurement requires funding, scheduling requires materials and any applicable permit or insurance checks, and closeout requires passed QA and reconciled payments.
 6. Open **Ask FrameOps** to learn a workflow, and use **Documents & Invoices** or **Customer Service** to explore trackable, post-installation records.
 7. Open **Business & Social Settings** to enable fictional social profile URLs and preview them on the storefront.
-8. In **Quote & Schedule Console**, preview 24-hour and 1-hour reminders and test an installation reschedule or supplier delay. The original separate journey simulator remains in source for historical comparison but is no longer the primary customer experience.
+8. In **Customer Storefront**, select items and create a fictional estimate request; then use **Live Journey Simulator** to test sample payments, rescheduling and cross-role alerts.
 
 ![FrameOps mobile workspace](assets/mobile.png)
 

@@ -26,24 +26,18 @@ with tempfile.TemporaryDirectory(prefix='frameops-ui-') as d:
     html=(ROOT/'public/index.html').read_text()
     css=(ROOT/'public/styles.css').read_text()
     ops=(ROOT/'public/ops_ui.js').read_text()
-    checkout=(ROOT/'public/quick_checkout.js').read_text()
-    catalog=(ROOT/'public/catalog.js').read_text()
-    store=(ROOT/'public/storefront.js').read_text()
-    social=(ROOT/'public/business_settings.js').read_text()
-    journey=(ROOT/'public/demo_journey.js').read_text()
     app=(ROOT/'public/app.js').read_text()
     html=html.replace('<link rel="stylesheet" href="/styles.css">',f'<style>{css}</style>')
-    for script in ['catalog','demo_journey','storefront','business_settings','quick_checkout','ops_ui','app']:
-        html=html.replace(f'<script src="/{script}.js"></script>', '')
+    html=html.replace('<script src="/ops_ui.js"></script>', '')
     html=html.replace('<script src="/app.js"></script>', '')
-    mocked=f'''<script>window.__demoStorage={{}};Object.defineProperty(window,'localStorage',{{configurable:true,value:{{getItem:k=>window.__demoStorage[k]||null,setItem:(k,v)=>window.__demoStorage[k]=String(v),removeItem:k=>delete window.__demoStorage[k]}}}});const STUB={json.dumps(payload)};
+    mocked=f'''<script>const STUB={json.dumps(payload)};
     window.fetch=async (path,options={{}})=> {{
       if(path==='/api/bootstrap')return new Response(JSON.stringify(STUB),{{status:200,headers:{{'Content-Type':'application/json'}}}});
       if(path==='/api/ops/guide')return new Response(JSON.stringify({{'title':'Documents and invoices','answer':'Open Documents & Invoices to review invoices, print records, and update external payment status. This guide does not perform transactions.','view':'documents'}}),{{status:200,headers:{{'Content-Type':'application/json'}}}});
       return new Response(JSON.stringify({{'ok':true,'id':'F-1009','message':'Saved'}}),{{status:200,headers:{{'Content-Type':'application/json'}}}});
     }};
     </script>'''
-    html=html.replace('</body>',mocked+''.join(f'<script>{x}</script>' for x in [catalog,journey,store,social,checkout,ops,app])+'</body>')
+    html=html.replace('</body>',mocked+f'<script>{ops}</script><script>{app}</script></body>')
     with sync_playwright() as p:
         browser=p.chromium.launch(headless=True,executable_path='/usr/bin/chromium',args=['--no-sandbox'])
         for viewport,label in [({'width':1440,'height':900},'desktop'),({'width':390,'height':844},'mobile')]:
@@ -51,8 +45,6 @@ with tempfile.TemporaryDirectory(prefix='frameops-ui-') as d:
             errors=[]
             page.on('pageerror',lambda e:errors.append(str(e)))
             page.set_content(html,wait_until='load',timeout=20000)
-            page.wait_for_selector('.q-hero',timeout=4000)
-            page.evaluate("go('overview')")
             page.wait_for_selector('.ops-metrics',timeout=4000)
             assert 'Every job. Every handoff' in page.locator('#app').inner_text()
             assert page.locator('.ops-job-tile').count()>=6
@@ -67,11 +59,12 @@ with tempfile.TemporaryDirectory(prefix='frameops-ui-') as d:
             assert page.locator('.ops-guide-reply').count()>=2
             page.locator('#ops-guide-close').click()
             page.locator('[data-nav="storefront"]').first.click()
-            assert 'Find your fit.' in page.locator('.q-hero h1').inner_text()
-            page.locator('[data-q-add="CV-210"]').first.click()
-            page.evaluate("go('quick-quote')")
-            assert page.locator('#q-checkout-form').is_visible()
-            page.evaluate("go('customer-service')")
+            assert 'Plan your next installation' in page.locator('.ops-store-hero h2').inner_text()
+            page.locator('[data-ops-open="storeLead"]').first.click()
+            assert page.locator('#ops-form').is_visible()
+            page.locator('[data-ops-close]').first.click()
+            if label=='mobile':page.locator('#mobile-menu').click()
+            page.locator('[data-nav="customer-service"]').first.click()
             assert 'Customer Service' in page.locator('.ops-page-head h1').inner_text()
             assert not errors,errors
             page.wait_for_timeout(320)
