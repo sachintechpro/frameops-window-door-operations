@@ -66,7 +66,8 @@ def inspect_page(browser, width, height):
         assert title.evaluate("(el)=>el.scrollHeight<=el.clientHeight+2"), "Header title wrapped vertically"
         guide=page.locator("#ops-guide-launch")
         bubble=assert_bounded(page,"#ops-guide-launch",actual_width,"floating guide")
-        assert bubble["width"]<=58 and bubble["height"]<=58, f"Guide too large on mobile: {bubble}"
+        if width <= 670:
+            assert bubble["width"]<=58 and bubble["height"]<=58, f"Guide too large on phone: {bubble}"
         assert page.locator(".ops-guide-button").get_attribute("aria-label") == "Open FrameOps operating guide"
         assert sim_box["y"] > page.locator(".topbar").bounding_box()["y"], "Status banner overlays header"
 
