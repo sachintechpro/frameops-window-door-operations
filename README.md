@@ -2,6 +2,8 @@
 
 **A working, multi-role operations management prototype for residential window and door installation businesses.**
 
+**[Explore the live FrameOps application](https://frameops-operations.onrender.com/)** · [Source repository](https://github.com/sachintechpro/frameops-window-door-operations)
+
 FrameOps illustrates how one end-to-end value stream can replace disconnected spreadsheets, phone calls, and handoffs with a shared homeowner/job record, visible dependencies, and accountable work queues.
 
 > **Interactive portfolio demo, not a production customer system.** All included homeowners, addresses, suppliers, and financial records are fictional. Anyone using the public demo must enter fictional data only. Role switching demonstrates journeys and **does not provide authentication or enforce real access control**.
