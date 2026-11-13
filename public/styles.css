@@ -137,3 +137,78 @@
 .sign-in-required .shell{display:block}
 #sign-in-form{max-width:420px;margin:10vh auto}
 #sign-in-error{color:#a52839}
+
+
+/* FrameOps mobile operations polish · UI only
+   Keeps all role gates, workflows, notifications and modal actions unchanged. */
+.public-demo-note{gap:12px;line-height:1.45}
+.public-demo-note .demo-note-text{display:flex;flex:1 1 auto;align-items:center;flex-wrap:wrap;gap:4px 9px;min-width:0}
+.public-demo-note .demo-note-detail{color:#587096;font-weight:540}
+.public-demo-note button{min-height:32px;text-align:left;white-space:normal}
+#app>.sim-mini-banner{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;margin:14px clamp(20px,3.5vw,54px) 0;padding:13px 17px;border:1px solid #dbe5f5;border-radius:13px;background:#f6f9ff;color:#233954;min-width:0}
+#app>.sim-mini-banner>div{flex:1 1 240px;min-width:0;display:grid;gap:4px}
+#app>.sim-mini-banner strong{font-size:13px;line-height:1.45;overflow-wrap:anywhere}
+#app>.sim-mini-banner span{display:block;font-size:11px;line-height:1.5;color:#647b99;overflow-wrap:anywhere}
+#app>.sim-mini-banner .button{min-height:40px;border-color:#c9d8f1;background:#fff;color:#315bd2;flex-shrink:0}
+.ops-dashboard .ops-success-banner>span{display:block}
+.ops-dashboard .ops-success-banner{gap:12px}
+.ops-dashboard .ops-priority-banner{min-width:0}
+.ops-dashboard .ops-welcome>div:first-child{min-width:0}
+.ops-dashboard .ops-welcome h1{text-wrap:balance;overflow-wrap:normal}
+.ops-dashboard .ops-welcome-actions .button{min-height:42px}
+#ops-guide-launch:focus-visible{outline:3px solid #92b4ff;outline-offset:3px}
+@media(max-width:800px){
+ .topbar{gap:8px;padding:0 12px;height:62px}
+ .topbar .header-start{min-width:0;flex:1 1 auto;gap:7px}
+ .topbar .mobile-menu{display:grid;flex:0 0 40px;width:40px;height:40px;margin-right:0}
+ .topbar .breadcrumb{min-width:0;flex:1;font-size:13px;gap:5px}
+ .topbar .breadcrumb>span:first-child,.topbar .breadcrumb>.crumb-slash{display:none}
+ .topbar .breadcrumb strong{display:block;min-width:0;max-width:100%;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+ .topbar .top-right{flex:0 0 auto;gap:7px;min-width:0}
+ .topbar .top-button{width:38px;min-width:38px;height:38px;font-size:18px}
+ .topbar .role-box{border:0;padding:0;gap:0}
+ .topbar .role-avatar{display:none}
+ .topbar .role-control{min-width:0}
+ .topbar .role-control label{font-size:8px;letter-spacing:.7px}
+ .topbar .role-control select{max-width:108px;width:auto;font-size:12px}
+ .ops-dashboard .ops-welcome-mark{display:none}
+}
+@media(max-width:670px){
+ .public-demo-note{padding:8px 14px;gap:6px 12px}
+ .public-demo-note .demo-note-text{flex:1 1 220px;font-size:10px}
+ .public-demo-note .demo-note-detail{font-size:10px}
+ .public-demo-note button{margin:0;font-size:11px;min-height:26px;padding:2px 0}
+ #app>.sim-mini-banner{margin:10px 14px 0;padding:11px 13px;gap:8px}
+ #app>.sim-mini-banner>div{flex-basis:100%}
+ #app>.sim-mini-banner strong{font-size:12px}
+ #app>.sim-mini-banner span{font-size:11px}
+ #app>.sim-mini-banner .button{min-height:36px;padding:8px 12px;font-size:11px;white-space:normal}
+ .ops-dashboard{padding:12px 14px 145px}
+ .ops-dashboard .ops-success-banner{display:block;padding:11px 13px;margin-bottom:12px;line-height:1.5}
+ .ops-dashboard .ops-success-banner strong{font-size:12px}
+ .ops-dashboard .ops-success-banner>span{font-size:11px;margin-top:2px}
+ .ops-dashboard .ops-priority-banner{padding:12px 14px;gap:8px;flex-wrap:wrap;margin-bottom:12px}
+ .ops-dashboard .ops-priority-banner p{line-height:1.5}
+ .ops-dashboard .ops-metrics{margin-bottom:12px;gap:9px}
+ .ops-dashboard .ops-metric{padding:12px}
+ .ops-dashboard .ops-metric strong{font-size:23px;margin-top:7px}
+ .ops-dashboard .ops-welcome{padding:15px 16px;margin-bottom:13px;border-radius:15px}
+ .ops-dashboard .ops-welcome h1{font-size:23px;line-height:1.18;letter-spacing:-.55px;margin:5px 0 9px}
+ .ops-dashboard .ops-welcome p{font-size:12px;line-height:1.55;margin-bottom:13px}
+ .ops-dashboard .ops-welcome .ops-eyebrow{font-size:9px;letter-spacing:1px}
+ .ops-dashboard .ops-welcome-actions{gap:8px}
+ .ops-dashboard .ops-welcome-actions .button{font-size:11px;padding:10px 12px;min-height:42px;white-space:normal;text-align:center}
+ .ops-guide-shell{right:calc(12px + env(safe-area-inset-right,0px));bottom:calc(80px + env(safe-area-inset-bottom,0px))}
+ .ops-guide-shell #ops-guide-launch{width:50px;min-width:50px;height:50px;padding:0;justify-content:center;border-radius:50%}
+ #ops-guide-launch span:last-child{display:none}
+ #ops-guide-launch span:first-child{font-size:23px;line-height:1}
+ .ops-guide-panel{height:min(510px,calc(100dvh - 160px));width:min(370px,calc(100vw - 24px));max-height:calc(100dvh - 160px)}
+}
+@media(max-width:360px){
+ .topbar{padding:0 9px;gap:6px}
+ .topbar .breadcrumb strong{font-size:12px}
+ .topbar .role-control select{max-width:94px;font-size:11px}
+ .topbar .top-right{gap:5px}
+ .topbar .top-button{width:35px;min-width:35px;height:35px}
+ .ops-dashboard .ops-welcome-actions .button{flex:1 1 100%;width:100%}
+}
