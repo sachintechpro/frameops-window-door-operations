@@ -1,0 +1,11 @@
+services:
+  - type: web
+    name: frameops-operations
+    runtime: python
+    plan: free
+    buildCommand: echo "No dependencies to install"
+    startCommand: python server.py
+    healthCheckPath: /health
+    envVars:
+      - key: PUBLIC_DEMO
+        value: "1"

@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="en"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#132238"><title>FrameOps | Window & Door Operations</title>
+<link rel="stylesheet" href="/styles.css">
+</head><body>
+<div class="shell">
+  <aside class="sidebar" id="sidebar">
+    <a href="#overview" class="brand" data-nav="overview">
+      <span class="brandmark"><span></span><span></span><span></span><span></span></span>
+      <span><strong>FrameOps</strong><small>WINDOW & DOOR OPERATIONS</small></span>
+    </a>
+    <div class="side-section">WORKSPACE</div>
+    <nav class="side-nav">
+      <button class="nav-link active" data-nav="overview"><span class="nav-ic">◫</span> Overview</button>
+      <button class="nav-link" data-nav="jobs"><span class="nav-ic">▦</span> Leads & Jobs <b class="nav-count" id="nav-job-count">8</b></button>
+      <button class="nav-link" data-nav="tasks"><span class="nav-ic">☷</span> My Work Queue</button>
+      <button class="nav-link" data-nav="notifications"><span class="nav-ic">◎</span> Notifications <b class="nav-count" id="nav-notif-count">0</b></button>
+    </nav>
+    <div class="side-section second">PORTALS</div>
+    <nav class="side-nav">
+      <button class="nav-link" data-nav="homeowner"><span class="nav-ic">⌂</span> Homeowner View</button>
+      <button class="nav-link" data-nav="workflow"><span class="nav-ic">⊞</span> Workflow Design</button>
+    </nav>
+    <div class="sidebar-bottom">
+      <div class="client-note"><span class="note-dot"></span><div><strong>Client-owned operations</strong><p>One job record. Every team. Complete visibility.</p></div></div>
+      <div class="sidebar-foot">INTERACTIVE PROTOTYPE <span>v1.0</span></div>
+    </div>
+  </aside>
+  <div class="workspace">
+    <header class="topbar">
+      <div class="header-start"><button id="mobile-menu" class="icon-button mobile-menu" aria-label="Open menu">☰</button><div class="breadcrumb"><span>Operations</span><span class="crumb-slash">/</span><strong id="crumb">Overview</strong></div></div>
+      <div class="top-right"><div class="demo-tag"><span class="dot"></span> Interactive demo</div><button class="top-button" id="top-notifications" aria-label="View notifications">♧ <span id="top-notif-count" class="top-count">0</span></button><div class="role-box"><span class="role-avatar" id="role-avatar">AD</span><div class="role-control"><label for="role-select">WORKING AS</label><select id="role-select" aria-label="View app as a role"><option>Admin</option><option>Front Desk</option><option>Sales</option><option>Measurement Tech</option><option>Accountant</option><option>Vendor</option><option>Installation Manager</option><option>Service Tech</option><option>Homeowner</option></select></div></div></div>
+    </header>
+    <div class="public-demo-note" role="note">Public sandbox · Fictional data only · No real customer information</div>
+    <main id="app"><div class="loading-screen"><div class="spinner"></div> Loading operations...</div></main>
+  </div>
+</div>
+<div id="modal-root"></div><div id="toast-root" aria-live="polite"></div>
+<script src="/app.js"></script>
+</body></html>

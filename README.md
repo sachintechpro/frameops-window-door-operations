@@ -1,3 +1,74 @@
-# FrameOps — Windows & Doors Operations
+# FrameOps — Window & Door Operations
 
-Operational workflow showcase. Project source and detailed documentation will be committed next.
+**A working, multi-role operations management prototype for residential window and door installation businesses.**
+
+FrameOps illustrates how one end-to-end value stream can replace disconnected spreadsheets, phone calls, and handoffs with a shared homeowner/job record, visible dependencies, and accountable work queues.
+
+> **Interactive portfolio demo, not a production customer system.** All included homeowners, addresses, suppliers, and financial records are fictional. Anyone using the public demo must enter fictional data only. Role switching demonstrates journeys and **does not provide authentication or enforce real access control**.
+
+![FrameOps operations dashboard](assets/dashboard.png)
+
+## What the application demonstrates
+
+| Journey | Business capability |
+| --- | --- |
+| Lead → Qualified | Intake, inquiry triage, front desk assignment and sales handoff |
+| Measurement → Proposal | Field appointment, item-by-item window/door specifications, quotation |
+| Proposal → Contract | Homeowner approval, contract tracking, deposits and financing status |
+| Contract → Procurement | Funding gate, supplier purchase order, ETA and delivery confirmation |
+| Delivery → Installation | Permit/insurance prerequisites, installation scheduling, crew handoff |
+| Installation → Closeout | Quality walkthrough, payment reconciliation, warranty activation |
+| Warranty → Aftercare | Homeowner service request, assigned technician queue and activity history |
+
+![Detailed job workspace](assets/job-workspace.png)
+
+### Nine operational perspectives
+
+- **Owner / Admin:** overview, work-in-progress, bottlenecks and escalations.
+- **Front Desk:** inquiries, qualification, appointment follow-ups.
+- **Sales:** job scope, estimates, homeowner approval and contracts.
+- **Measurement Technician:** site notes, rooms, product sizes and specifications.
+- **Accountant:** deposits, payment records, financing and final balance.
+- **Vendor:** procurement milestones, supply arrival and receipt confirmation.
+- **Installation Manager:** orders, material readiness, permits, insurance and schedule.
+- **Service Technician:** installation completion, punch-list/QA and warranty follow-up.
+- **Homeowner:** selected milestones, proposal/contract acknowledgement and service requests.
+
+### Delivery and project-management thinking
+
+This case study demonstrates a *value-stream-oriented operating model* through one job lifecycle rather than separate departmental status trackers. Teams have clear decision points, documented dependencies, visible work queues and event-based notifications.
+
+The design draws on **Lean flow and value-stream principles**—removing waiting and unclear ownership—and **SAFe/Lean Portfolio Management concepts** such as prioritizing value, making dependencies visible, and measuring delivery flow. It is **not** a claim that the application implements or certifies a SAFe framework.
+
+**Illustrative outcomes to evaluate in a real implementation:** lead response time, quote cycle time, lead-to-contract conversion, elapsed time from funding to installation, rework/punch-list frequency, overdue vendor handoffs, and cash collection time. No measured improvement is claimed in this prototype.
+
+## Explore
+
+1. Start with **Overview** and inspect the eight seeded fictional homeowner jobs.
+2. Open **Leads & Jobs**, select any record, and explore the complete journey, product measurements, financials, documents, and activity history.
+3. Change **Working as** to experience the front desk, sales, field, supplier, accounting, and homeowner roles.
+4. Use the next-stage action in a job record. A successful action updates the shared stage, creates the next department's task, and generates in-app notifications.
+5. Test the blockers: procurement requires funding, scheduling requires materials and any applicable permit or insurance checks, and closeout requires passed QA and reconciled payments.
+
+![FrameOps mobile workspace](assets/mobile.png)
+
+## Scope and boundaries
+
+The prototype uses Python's standard-library HTTP server, SQLite, and plain HTML/CSS/JavaScript. It has no paid dependencies. Finance approvals and payments are manually recorded mock workflow states, not real bank, lender, or payment transactions. Contract acknowledgement is not a legal e-signature. Notifications are in-app only. Public deployment disables uploaded documents and uses a shared, resettable demo database.
+
+**Before real customer use:** implement authentication, enforced per-role and per-homeowner authorization, real audit logs and consent management, private document storage, backed-up database, secured communications, payment provider, approved financing and e-signature integrations, and jurisdiction-specific installation/permit/warranty rules.
+
+For detailed scope, domain entities, workflow rules and future roadmap, see [DESIGN.md](DESIGN.md).
+
+<details>
+<summary>Local development</summary>
+
+Requires Python 3.10+ and no additional packages.
+
+```sh
+python server.py
+```
+
+Open `http://localhost:10000`. For a public/shared demo environment set `PUBLIC_DEMO=1` so file uploads are disabled and demo leads are capped. Render can read the included `render.yaml`; use a Python web service and the start command `python server.py`. Disk-based SQLite records are not durable on a standard ephemeral Render filesystem.
+
+</details>
