@@ -2,6 +2,7 @@
 
 All data stays in a temporary SQLite database, with no external services or customers.
 """
+from concurrent.futures import ThreadPoolExecutor
 import json
 import os
 from pathlib import Path
@@ -142,5 +143,29 @@ class OperationsTests(unittest.TestCase):
             self.assertEqual(code,200)
             self.assertGreater(len(guide['answer']),80)
             self.assertIn('view',guide)
+
+    def test_06_concurrent_handoff_and_out_of_order_actions(self):
+        _, new = self.call('/api/jobs', {'homeowner':'Workflow Test','address':'100 Sample Way','actor':'Front Desk'})
+        jid = new['id']
+        self.assertEqual(self.action(jid,'close_job','Admin',terms='Example warranty')[0],400)
+        warranty = {'actor':'Admin','job_id':jid,'category':'Warranty','subject':'Window latch',
+                    'detail':'Check the installed window latch'}
+        self.assertEqual(self.call('/api/ops/tickets',warranty)[0],400)
+        with ThreadPoolExecutor(max_workers=2) as pool:
+            outcomes = list(pool.map(lambda _: self.action(jid,'qualify','Front Desk')[0], range(2)))
+        self.assertEqual(sorted(outcomes), [200,400])
+        _, job = self.call(f'/api/jobs/{jid}')
+        self.assertEqual(job['stage'], 'Qualified')
+        self.assertEqual([t['code'] for t in job['tasks'] if t['status']=='Open'], ['schedule_measurement'])
+        _, boot = self.call('/api/bootstrap')
+        self.assertEqual(sum(n['job_id']==jid and n['role']=='Sales' and n['title']=='Lead qualified'
+                             for n in boot['notifications']), 1)
+        visit = {'actor':'Sales','job_id':jid,'kind':'Measurement',
+                 'scheduled_date':(date.today()+timedelta(days=2)).isoformat()}
+        self.assertEqual(self.call('/api/ops/appointments',visit)[0],201)
+        self.assertEqual(self.call('/api/ops/appointments',visit)[0],400)
+        _, job = self.call(f'/api/jobs/{jid}')
+        self.assertEqual(job['stage'], 'Measurement Scheduled')
+        self.assertEqual([t['code'] for t in job['tasks'] if t['status']=='Open'], ['complete_measurement'])
 
 if __name__=='__main__':unittest.main()

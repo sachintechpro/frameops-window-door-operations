@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""FrameOps local/demo server: Python standard library only. NOT production authentication."""
+"""FrameOps operations server and fictional portfolio demo."""
 from __future__ import annotations
 import base64
 import json
@@ -12,13 +12,14 @@ from datetime import datetime, timedelta, timezone
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from urllib.parse import urlparse, unquote
 from uuid import uuid4
+from accounts import DEMO, SESSION_SECONDS, initialize_accounts, identity, session_key, sign_in
 from operations import initialize_ops, dashboard as ops_dashboard, job_operations, mutation as ops_mutation, guide as ops_guide, sync_milestone, printable_invoice
 
 ROOT = Path(__file__).resolve().parent
 PUBLIC = ROOT / "public"
 DB_PATH = Path(os.getenv("DB_PATH", str(ROOT / "data" / "frameops.db")))
 UPLOAD_DIR = Path(os.getenv("UPLOAD_DIR", str(ROOT / "data" / "uploads")))
-PUBLIC_DEMO = os.getenv('PUBLIC_DEMO', '0') == '1'
+PUBLIC_DEMO = DEMO
 ROLES = ["Admin", "Front Desk", "Sales", "Measurement Tech", "Accountant", "Vendor", "Installation Manager", "Service Tech", "Homeowner", "Financing", "Customer Service", "Warranty Coordinator"]
 STAGES = ["New Lead", "Qualified", "Measurement Scheduled", "Measurements Complete", "Proposal Sent", "Proposal Approved", "Contract Signed", "Funding Cleared", "Materials Ordered", "Materials Received", "Installation Scheduled", "Installed", "QA Passed", "Closed"]
 STAGE_IDX = {s:i for i,s in enumerate(STAGES)}
@@ -32,6 +33,7 @@ ALLOWED_ACTIONS = {
     "sign_contract": ["Sales", "Homeowner"],
     "finance_update": ["Accountant", "Financing"],
     "record_payment": ["Accountant"],
+    "clear_funding": ["Accountant"],
     "place_order": ["Installation Manager"],
     "materials_received": ["Vendor", "Installation Manager"],
     "schedule_install": ["Installation Manager"],
@@ -125,10 +127,11 @@ def initialize():
         if not n:
             seed(con)
         initialize_ops(con)
+        initialize_accounts(con, ROLES)
 
 
 def task(con, job_id, role, title, code, detail="", days=2):
-    existing=con.execute("SELECT id FROM tasks WHERE job_id=? AND code=? AND status='Open'",(job_id,code)).fetchone()
+    existing=con.execute("SELECT id FROM tasks WHERE job_id=? AND code=?",(job_id,code)).fetchone()
     if existing: return
     con.execute("INSERT INTO tasks(job_id,role,title,detail,code,due_date,created_at) VALUES(?,?,?,?,?,?,?)",
                 (job_id,role,title,detail,code,date_offset(days),now()))
@@ -141,12 +144,15 @@ def finish_task(con, job_id, code):
 def event(con, job_id, label, detail, actor, roles=()):
     con.execute("INSERT INTO events(job_id,label,detail,actor,created_at) VALUES(?,?,?,?,?)",(job_id,label,detail,actor,now()))
     for role in set(roles):
-        if role != actor and role in ROLES:
+        if role in ROLES:
             con.execute("INSERT INTO notifications(job_id,role,title,detail,created_at) VALUES(?,?,?,?,?)",(job_id,role,label,detail,now()))
 
 
 def move(con, job_id, stage):
-    con.execute("UPDATE jobs SET stage=?,updated_at=? WHERE id=?",(stage,now(),job_id))
+    previous = STAGES[STAGE_IDX[stage] - 1]
+    updated = con.execute("UPDATE jobs SET stage=?,updated_at=? WHERE id=? AND stage=?",
+                          (stage, now(), job_id, previous))
+    require(updated.rowcount == 1, f"Complete {previous} before advancing to {stage}")
 
 
 def paid_total(con, job_id):
@@ -156,6 +162,13 @@ def paid_total(con, job_id):
 def require(condition, message):
     if not condition:
         raise ValueError(message)
+
+
+def require_active_appointment(con, job_id, kind):
+    appointment = con.execute('SELECT status FROM appointments WHERE job_id=? AND kind=? ORDER BY id DESC LIMIT 1',
+                              (job_id, kind)).fetchone()
+    require(not appointment or appointment['status'] not in ('Cancelled', 'Delayed'),
+            f'Reconfirm the {kind.lower()} appointment before completion')
 
 
 def do_action(con, job_id, action, payload, actor):
@@ -198,6 +211,7 @@ def do_action(con, job_id, action, payload, actor):
         label='Measurement visit scheduled'; detail=f'Measurement technician assigned for {dt}'; roles=['Measurement Tech','Front Desk']
     elif action == 'complete_measurement':
         require(at('Measurement Scheduled'),"Schedule measurement first")
+        require_active_appointment(con,job_id,'Measurement')
         notes=str(payload.get('notes','')).strip(); require(len(notes)>=5,'Enter measurements, opening count, or field notes')
         con.execute("UPDATE jobs SET measurement_notes=? WHERE id=?",(notes,job_id))
         move(con,job_id,'Measurements Complete'); finish_task(con,job_id,'complete_measurement')
@@ -228,33 +242,50 @@ def do_action(con, job_id, action, payload, actor):
         move(con,job_id,'Contract Signed'); finish_task(con,job_id,'sign_contract')
         task(con,job_id,'Accountant','Verify deposit or financing','funding','Confirm cleared funds or financing approval before releasing procurement',1)
         label='Contract accepted'; detail=f'Contract acceptance recorded; deposit requirement ${deposit:,.2f}; {financing.lower()}'; roles=['Accountant','Installation Manager','Homeowner']
-        if deposit == 0 and financing=='Customer pay':
-            move(con,job_id,'Funding Cleared'); finish_task(con,job_id,'funding')
-            task(con,job_id,'Installation Manager','Place purchase order with vendor','place_order','Check final specifications and supplier',1)
+        if financing == 'Financing requested':
+            roles.append('Financing')
+    elif action == 'clear_funding':
+        require(at('Contract Signed'), 'Funding can only be cleared after signing')
+        require(job['financing_type'] == 'Customer pay' and job['deposit_required'] == 0,
+                'Record the required deposit or financing approval')
+        move(con, job_id, 'Funding Cleared')
+        finish_task(con, job_id, 'funding')
+        task(con, job_id, 'Installation Manager', 'Place purchase order with vendor', 'place_order',
+             'No deposit required under the signed contract', 1)
+        label = 'Funding cleared'; detail = 'No deposit required'; roles = ['Installation Manager']
     elif action == 'finance_update':
-        require(STAGE_IDX[stage]>=STAGE_IDX['Contract Signed'],"Contract must be signed first")
+        require(at('Contract Signed'), 'Financing decisions can be recorded while funding is pending')
         require(job['financing_type']=='Financing requested',"This job is not configured for financing")
         status=str(payload.get('status',''))
         require(status in ('Pending','Approved','Declined'),"Choose financing status")
+        if status == job['financing_status']:
+            return {'ok':True,'message':'Financing status already recorded'}
         con.execute("UPDATE jobs SET financing_status=? WHERE id=?",(status,job_id))
         label='Financing updated'; detail=f'Financing status: {status} (external decision recorded manually)'; roles=['Sales','Installation Manager','Homeowner']
         if status=='Approved' and stage=='Contract Signed':
             move(con,job_id,'Funding Cleared'); finish_task(con,job_id,'funding')
             task(con,job_id,'Installation Manager','Place purchase order with vendor','place_order','Funding approval recorded; verify lender conditions',1)
     elif action == 'record_payment':
-        require(STAGE_IDX[stage]>=STAGE_IDX['Contract Signed'],"Contract must be signed before payment recording")
+        require(STAGE_IDX['Contract Signed'] <= STAGE_IDX[stage] < STAGE_IDX['Closed'], 'Payments require a signed and open job')
         amount=float(payload.get('amount') or 0); require(0 < amount < 10000000,"Enter a valid positive payment amount")
         kind=str(payload.get('kind','Payment')); method=str(payload.get('method','Manual record'))
         reference=str(payload.get('reference','')).strip()
+        if reference:
+            require(not con.execute('SELECT 1 FROM payments WHERE job_id=? AND reference=?',
+                                    (job_id, reference)).fetchone(), 'Payment reference already recorded')
         require(paid_total(con,job_id)+amount <= float(job['quote_total'])+0.009,"Payment would exceed contract total")
         con.execute("INSERT INTO payments(job_id,amount,kind,method,reference,created_at) VALUES(?,?,?,?,?,?)",
                     (job_id,round(amount,2),kind,method,reference,now()))
         label='Payment recorded'; detail=f'${amount:,.2f} {kind.lower()} via {method}; reference {reference or "not entered"} (manual ledger)'; roles=['Sales','Installation Manager','Homeowner']
-        if stage=='Contract Signed' and paid_total(con,job_id)+0.009>=float(job['deposit_required']):
+        if (at('Contract Signed') and job['deposit_required'] > 0
+                and paid_total(con,job_id)+0.009>=float(job['deposit_required'])):
             move(con,job_id,'Funding Cleared'); finish_task(con,job_id,'funding')
             task(con,job_id,'Installation Manager','Place purchase order with vendor','place_order','Deposit threshold satisfied',1)
-        if paid_total(con,job_id)+0.009 >=float(job['quote_total']) and STAGE_IDX[stage]>=STAGE_IDX['Installed']:
-            task(con,job_id,'Accountant','Close out job after QA sign-off','close_job','Ensure QA is approved and issue warranty',1)
+        if paid_total(con,job_id)+0.009 >=float(job['quote_total']):
+            finish_task(con, job_id, 'final_balance')
+            if at('QA Passed'):
+                roles.append('Accountant')
+                task(con,job_id,'Accountant','Close out job and issue warranty','close_job','Final payment and QA are complete',1)
     elif action == 'place_order':
         require(stage=='Funding Cleared',"Verify deposit or financing before placing vendor order")
         vendor=str(payload.get('vendor','')).strip(); require(vendor,'Vendor name is required')
@@ -266,6 +297,7 @@ def do_action(con, job_id, action, payload, actor):
         label='Vendor purchase order placed'; detail=f'{vendor} · PO {po} · ETA {eta}'; roles=['Vendor','Installation Manager','Sales']
     elif action=='materials_received':
         require(at('Materials Ordered'),"Materials must be ordered before receipt")
+        require_active_appointment(con,job_id,'Vendor delivery')
         con.execute("UPDATE jobs SET materials_received=1 WHERE id=?",(job_id,))
         move(con,job_id,'Materials Received'); finish_task(con,job_id,'materials_received')
         task(con,job_id,'Installation Manager','Schedule installation crew','schedule_install','Confirm availability, permits, insurance and homeowner access',1)
@@ -283,6 +315,7 @@ def do_action(con, job_id, action, payload, actor):
         label='Installation scheduled'; detail=f'Installation planned for {dt}'; roles=['Service Tech','Front Desk','Sales','Homeowner']
     elif action=='installation_complete':
         require(at('Installation Scheduled'),"Installation must be scheduled first")
+        require_active_appointment(con,job_id,'Installation')
         notes=str(payload.get('notes','')).strip(); require(len(notes)>=4,'Add installation completion details')
         con.execute("UPDATE jobs SET install_notes=?,qa_status='Pending inspection' WHERE id=?",(notes,job_id))
         move(con,job_id,'Installed'); finish_task(con,job_id,'installation_complete')
@@ -292,10 +325,12 @@ def do_action(con, job_id, action, payload, actor):
         label='Installation completed'; detail=notes[:160]; roles=['Service Tech','Accountant','Installation Manager','Homeowner']
     elif action=='qa_passed':
         require(at('Installed'),"Complete installation before QA inspection")
+        require_active_appointment(con,job_id,'QA inspection')
         notes=str(payload.get('notes','')).strip(); require(len(notes)>=4,'Add field inspection notes')
         con.execute("UPDATE jobs SET qa_status='Passed' WHERE id=?",(job_id,))
         move(con,job_id,'QA Passed'); finish_task(con,job_id,'qa_passed')
-        task(con,job_id,'Accountant','Reconcile final payment and close job','close_job','Issue warranty and handover documentation after full payment',1)
+        if float(job['quote_total']) - paid_total(con, job_id) <= 0.009:
+            task(con,job_id,'Accountant','Close out job and issue warranty','close_job','Final payment and QA are complete',1)
         label='Quality walkthrough passed'; detail=notes[:160]; roles=['Accountant','Sales','Homeowner']
     elif action=='close_job':
         require(at('QA Passed'),"Quality walkthrough must pass before closeout")
@@ -306,7 +341,7 @@ def do_action(con, job_id, action, payload, actor):
         move(con,job_id,'Closed'); finish_task(con,job_id,'close_job'); finish_task(con,job_id,'final_balance')
         con.execute("INSERT INTO documents(job_id,doc_type,name,created_at,added_by) VALUES(?,?,?,?,?)",
                     (job_id,'Warranty','Warranty handover record (demo only)',now(),actor))
-        label='Job closed; warranty activated'; detail=terms[:160]; roles=['Homeowner','Front Desk','Service Tech','Sales']
+        label='Job closed; warranty activated'; detail=terms[:160]; roles=['Homeowner','Front Desk','Service Tech','Sales','Warranty Coordinator','Customer Service']
     elif action=='insurance_update':
         status=str(payload.get('status',''))
         require(status in ('Not required','Pending','Verified'),"Choose insurance verification status")
@@ -319,9 +354,9 @@ def do_action(con, job_id, action, payload, actor):
         label='Permit updated'; detail=f'Permit readiness: {status}'; roles=['Installation Manager','Front Desk']
     elif action=='service_request':
         require(at('Closed'),"Warranty service requests are available for closed jobs")
-        notes=str(payload.get('notes','')).strip(); require(len(notes)>=4,'Describe the warranty or service issue')
-        task(con,job_id,'Service Tech','Review homeowner service request','service_'+uuid4().hex[:7],notes,1)
-        label='Service request opened'; detail=notes[:160]; roles=['Service Tech','Front Desk','Homeowner']
+        notes=str(payload.get('notes','')).strip(); require(len(notes)>=8,'Describe the warranty or service issue')
+        return ops_mutation(con, '/api/ops/tickets', {'actor':actor,'job_id':job_id,
+                            'category':'Warranty','subject':'Warranty service request','detail':notes}, do_action)
     elif action=='note':
         notes=str(payload.get('notes','')).strip(); require(len(notes)>=3,'Enter a note')
         label='Team note added'; detail=notes[:240]; roles=[x for x in ROLES if x not in ('Homeowner','Vendor')]
@@ -330,6 +365,11 @@ def do_action(con, job_id, action, payload, actor):
         con.execute("UPDATE jobs SET priority=? WHERE id=?",(p,job_id))
         label='Priority updated'; detail=f'Priority: {p}'; roles=['Sales','Front Desk']
     event(con,job_id,label,detail,actor,roles)
+    if action in ('complete_measurement', 'installation_complete', 'qa_passed', 'materials_received'):
+        kind = {'complete_measurement': 'Measurement', 'installation_complete': 'Installation',
+                'qa_passed': 'QA inspection', 'materials_received': 'Vendor delivery'}[action]
+        con.execute("UPDATE appointments SET status='Completed',updated_at=? WHERE job_id=? AND kind=?",
+                    (now(), job_id, kind))
     sync_milestone(con,job_id,action,payload,actor)
     con.execute('UPDATE jobs SET updated_at=? WHERE id=?',(now(),job_id))
     return {'ok':True,'message':label}
@@ -406,6 +446,11 @@ def job_detail(con,id):
     return data
 
 
+def customer_job(job):
+    return {key: job[key] for key in ('id','homeowner','stage','quote_total','paid',
+            'service_type','address','install_date','warranty_status','warranty_terms')}
+
+
 class Handler(BaseHTTPRequestHandler):
     server_version='FrameOpsDemo/1.0'
     def log_message(self, fmt,*args):
@@ -415,9 +460,18 @@ class Handler(BaseHTTPRequestHandler):
         self.send_header('X-Content-Type-Options','nosniff')
         self.send_header('Cache-Control','no-store')
         if length is not None:self.send_header('Content-Length',str(length))
-    def send_json(self,obj,status=200):
+    def send_json(self,obj,status=200,cookie=None):
         b=json.dumps(obj,ensure_ascii=False,default=str).encode()
-        self.send_response(status); self.headers_common(length=len(b)); self.end_headers(); self.wfile.write(b)
+        self.send_response(status); self.headers_common(length=len(b))
+        if cookie:
+            self.send_header('Set-Cookie', cookie)
+        self.end_headers(); self.wfile.write(b)
+    def account(self):
+        with db() as con:
+            return identity(con, self.headers.get('Cookie', ''))
+    def session_cookie(self, token='', max_age=0):
+        secure = '; Secure' if os.getenv('RENDER') or os.getenv('FRAMEOPS_SECURE_COOKIE') == '1' else ''
+        return f'frameops_session={token}; Path=/; HttpOnly; SameSite=Strict; Max-Age={max_age}{secure}'
     def payload(self):
         size=int(self.headers.get('Content-Length','0'))
         if size>8000000: raise ValueError('Request too large (8 MB maximum)')
@@ -425,6 +479,13 @@ class Handler(BaseHTTPRequestHandler):
     def do_GET(self):
         p=unquote(urlparse(self.path).path)
         try:
+            account = self.account() if p.startswith('/api/') and not PUBLIC_DEMO else None
+            if p.startswith('/api/') and not PUBLIC_DEMO and not account:
+                return self.send_json({'error':'Sign in to FrameOps'},401)
+            if account and account['role'] == 'Homeowner' and p not in (
+                '/api/bootstrap', '/api/jobs/' + account['job_id']
+            ):
+                return self.send_json({'error':'This view is unavailable for your account'},403)
             if p=='/api/ops/dashboard':
                 with db() as con: payload = ops_dashboard(con)
                 return self.send_json(payload)
@@ -445,10 +506,24 @@ class Handler(BaseHTTPRequestHandler):
                     ns=[dict(x) for x in con.execute('SELECT * FROM notifications ORDER BY id DESC LIMIT 150')]
                     events=[dict(x) for x in con.execute('SELECT e.*,j.homeowner FROM events e JOIN jobs j ON j.id=e.job_id ORDER BY e.id DESC LIMIT 24')]
                     operations=ops_dashboard(con)
-                return self.send_json({'jobs':jobs,'tasks':tasks,'notifications':ns,'events':events,'roles':ROLES,'stages':STAGES,'demo':True,'operations':operations})
+                role = account['role'] if account else 'Admin'
+                if account and role != 'Admin':
+                    ns = [n for n in ns if n['role'] == role]
+                    tasks = [t for t in tasks if t['role'] == role]
+                    operations['tasks'] = [t for t in operations['tasks'] if t['role'] == role]
+                if account and role == 'Homeowner':
+                    own = account['job_id']
+                    jobs = [customer_job(j) for j in jobs if j['id'] == own]
+                    tasks, events, operations = [], [], {}
+                    ns = [n for n in ns if n['job_id'] == own]
+                return self.send_json({'jobs':jobs,'tasks':tasks,'notifications':ns,'events':events,
+                    'roles':ROLES if PUBLIC_DEMO else [role],'stages':STAGES,'demo':PUBLIC_DEMO,
+                    'role':role,'homeownerId':account.get('job_id') if account else None,'operations':operations})
             m=re.fullmatch(r'/api/jobs/(F-\d+)',p)
             if m:
                 with db() as con: j=job_detail(con,m.group(1))
+                if j and account and account['role'] == 'Homeowner':
+                    j = customer_job(j)
                 return self.send_json(j) if j else self.send_json({'error':'Job not found'},404)
             m=re.fullmatch(r'/api/documents/(\d+)',p)
             if m:
@@ -476,15 +551,41 @@ class Handler(BaseHTTPRequestHandler):
         p=urlparse(self.path).path
         try:
             data=self.payload()
+            if p == '/api/session' and not PUBLIC_DEMO:
+                with db() as con:
+                    token = sign_in(con, str(data.get('username','')), str(data.get('password','')))
+                if not token:
+                    return self.send_json({'error':'Invalid username or password'},401)
+                return self.send_json({'ok':True},cookie=self.session_cookie(token, SESSION_SECONDS))
+            if p == '/api/session/logout' and not PUBLIC_DEMO:
+                with db() as con:
+                    con.execute('DELETE FROM sessions WHERE token_hash=?',
+                                (session_key(self.headers.get('Cookie','')),))
+                return self.send_json({'ok':True},cookie=self.session_cookie())
+            account = self.account() if not PUBLIC_DEMO else None
+            if not PUBLIC_DEMO and not account:
+                return self.send_json({'error':'Sign in to FrameOps'},401)
+            actor = account['role'] if account else str(data.get('actor','Front Desk'))
+            if account and actor == 'Homeowner':
+                own = account['job_id']
+                allowed = (p == f'/api/jobs/{own}/action' or p == '/api/notifications/read'
+                           or (p in ('/api/ops/tickets','/api/ops/feedback','/api/ops/review')
+                               and data.get('job_id') == own))
+                if not allowed:
+                    return self.send_json({'error':'This action is unavailable for your account'},403)
             if p=='/api/ops/guide':
-                return self.send_json(ops_guide(data.get('question',''),data.get('context',''),data.get('role','Admin')))
+                return self.send_json(ops_guide(data.get('question',''),data.get('context',''),actor))
             if p.startswith('/api/ops/'):
-                with db() as con: result=ops_mutation(con,p,data)
+                with db() as con:
+                    con.execute('BEGIN IMMEDIATE')
+                    result=ops_mutation(con,p,{**data,'actor':actor},do_action)
                 return self.send_json(result,201 if p in ('/api/ops/appointments','/api/ops/invoices','/api/ops/tickets') else 200)
             if p=='/api/jobs':
+                require(actor in ('Admin','Front Desk','Sales','Homeowner'), 'This role cannot create a lead')
                 homeowner=str(data.get('homeowner','')).strip(); address=str(data.get('address','')).strip()
                 require(homeowner and address,'Homeowner name and address are required')
                 with db() as con:
+                    con.execute('BEGIN IMMEDIATE')
                     if PUBLIC_DEMO:
                         n_jobs = con.execute('SELECT COUNT(*) FROM jobs').fetchone()[0]
                         require(n_jobs < 40, 'This shared public demo has reached its lead limit. Reset the demo to continue.')
@@ -497,13 +598,14 @@ class Handler(BaseHTTPRequestHandler):
                         str(data.get('priority','Normal')) if data.get('priority') in ('Normal','High','Urgent') else 'Normal',
                         'New Lead',str(data.get('assigned_sales','Unassigned'))[:100],str(data.get('notes',''))[:1500],now(),now()))
                     task(con,id,'Front Desk','Qualify homeowner inquiry','qualify','Confirm contact details, scope and appointment',0)
-                    event(con,id,'New lead created',f"{data.get('service_type','Windows / doors')} · {data.get('lead_source','Website')}",str(data.get('actor','Front Desk')),['Sales','Front Desk'])
+                    event(con,id,'New lead created',f"{data.get('service_type','Windows / doors')} · {data.get('lead_source','Website')}",actor,['Front Desk'])
                 return self.send_json({'ok':True,'id':id},201)
             m=re.fullmatch(r'/api/jobs/(F-\d+)/action',p)
             if m:
                 try:
                     with db() as con:
-                        result=do_action(con,m.group(1),str(data.get('action','')),data.get('fields') or {},str(data.get('actor','Admin')))
+                        con.execute('BEGIN IMMEDIATE')
+                        result=do_action(con,m.group(1),str(data.get('action','')),data.get('fields') or {},actor)
                     return self.send_json(result)
                 except (ValueError,TypeError) as e:return self.send_json({'error':str(e)},400)
             m=re.fullmatch(r'/api/jobs/(F-\d+)/upload',p)
@@ -511,8 +613,7 @@ class Handler(BaseHTTPRequestHandler):
                 require(not PUBLIC_DEMO, 'File uploads are disabled in the public demo. Use fictional data only.')
                 name=Path(str(data.get('name',''))).name[:140]
                 doc_type=str(data.get('doc_type','Other'))[:80]
-                actor=str(data.get('actor','Admin'))
-                require(actor in ROLES,'Invalid actor')
+                require(actor in ('Admin','Sales','Front Desk','Accountant','Measurement Tech','Installation Manager','Service Tech','Warranty Coordinator'), 'This role cannot upload documents')
                 require(bool(name),'File name required')
                 contents=base64.b64decode(data.get('base64',''),validate=True)
                 require(0<len(contents)<=4000000,'File must be 1 byte to 4 MB')
@@ -526,10 +627,12 @@ class Handler(BaseHTTPRequestHandler):
                     event(con,m.group(1),'Document uploaded',f'{doc_type}: {name}',actor,['Sales','Installation Manager','Accountant'])
                 return self.send_json({'ok':True})
             if p=='/api/notifications/read':
-                actor=str(data.get('actor',''))
                 require(actor in ROLES,'Invalid role')
                 with db() as con:
                     if actor=='Admin':con.execute('UPDATE notifications SET read_at=? WHERE read_at IS NULL',(now(),))
+                    elif account and actor == 'Homeowner':
+                        con.execute("UPDATE notifications SET read_at=? WHERE role=? AND job_id=? AND read_at IS NULL",
+                                    (now(),actor,account['job_id']))
                     else:con.execute('UPDATE notifications SET read_at=? WHERE role=? AND read_at IS NULL',(now(),actor))
                 return self.send_json({'ok':True})
             return self.send_json({'error':'Endpoint not found'},404)

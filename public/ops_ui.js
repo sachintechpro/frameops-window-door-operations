@@ -14,6 +14,15 @@ const OPS_MODULES = {
   'customer-service': {title:'Customer Service',kicker:'Customer satisfaction and review journey',desc:'Track issues through resolution, collect voluntary satisfaction feedback, and offer optional Google review links after closeout.',roles:['Customer Service','Warranty Coordinator','Front Desk'],stages:['New Lead','Installed','QA Passed','Closed'],help:'Respond to open cases, record customer sentiment and follow through without making review submission a condition of service.'},
   'documents': {title:'Documents & Invoices',kicker:'Traceable project records',desc:'Locate job documents and printable sample invoices, create new invoice records and track due dates.',roles:['Accountant','Sales','Front Desk'],stages:[],help:'Review contract, measurement, supplier, insurance, permit and warranty records and create/print sample invoices.'},
 };
+const appointmentTypes = {
+ 'Measurement': ['Front Desk','Sales'],
+ 'Vendor delivery': ['Vendor','Installation Manager'],
+ 'Installation': ['Installation Manager'],
+ 'QA inspection': ['Service Tech','Installation Manager'],
+ 'Warranty service': ['Service Tech','Customer Service','Warranty Coordinator'],
+ 'Follow-up call': ['Front Desk','Sales','Customer Service']
+};
+const appointmentOptions = () => Object.keys(appointmentTypes).filter(kind=>visibleTo(appointmentTypes[kind]));
 const opData = () => state.data?.operations || {jobs:[],tasks:[],appointments:[],invoices:[],tickets:[],satisfaction:[],documents:[],alerts:[],payments:[]};
 const opsJob = id => opData().jobs.find(j=>j.id===id);
 const opsNum = (n,d=0) => Number(n||0).toLocaleString('en-US',{maximumFractionDigits:d});
@@ -31,7 +40,9 @@ const opsAlerts = (limit=5) => {
 };
 const opsStageProgress = j => {const n=state.data.stages.indexOf(j.stage);const pct=Math.round((n+1)*100/state.data.stages.length);return `<div class="ops-progress" role="progressbar" aria-valuenow="${pct}" aria-valuemin="0" aria-valuemax="100" title="${esc(j.stage)}"><span style="width:${pct}%"></span></div><small>${esc(j.stage)} · ${pct}% of operational milestones</small>`};
 const opsJobTile = j => `<article class="ops-job-tile"><div class="ops-tile-top"><strong>${esc(j.homeowner)}</strong>${opsStatus(j.stage)}</div><p>${esc(j.service_type)} · ${esc(j.id)}</p>${opsStageProgress(j)}<div class="ops-tile-bottom"><span>${esc(j.assigned_sales||'Unassigned')}</span>${opsJobButton(j.id)}</div></article>`;
-const opsAppointment = a => `<article class="ops-record"><div class="ops-record-top"><strong>${esc(a.kind)}</strong>${opsStatus(a.status)}</div><p>${esc(a.homeowner||a.job_id)} · ${opsDate(a.scheduled_date)} · ${esc(a.time_window||'TBC')}</p><small>Owner: ${esc(a.owner_role)} · Assigned: ${esc(a.assignee)} · ETA: ${opsDate(a.eta_date)}</small>${a.delay_reason?`<div class="ops-record-warning">Delay: ${esc(a.delay_reason)}</div>`:''}<div class="ops-record-actions">${opsJobButton(a.job_id)}<button class="ops-link" data-ops-open="appointmentStatus" data-ops-id="${a.id}" data-ops-job="${esc(a.job_id)}">Update / delay</button></div></article>`;
+const canUpdateAppointment = a => a.status!=='Completed' && (state.role==='Admin'||state.role===a.owner_role||
+ state.role==='Front Desk'||(state.role==='Installation Manager'&&['Installation','Vendor delivery','QA inspection'].includes(a.kind)));
+const opsAppointment = a => `<article class="ops-record"><div class="ops-record-top"><strong>${esc(a.kind)}</strong>${opsStatus(a.status)}</div><p>${esc(a.homeowner||a.job_id)} · ${opsDate(a.scheduled_date)} · ${esc(a.time_window||'TBC')}</p><small>Owner: ${esc(a.owner_role)} · Assigned: ${esc(a.assignee)} · ETA: ${opsDate(a.eta_date)}</small>${a.delay_reason?`<div class="ops-record-warning">Delay: ${esc(a.delay_reason)}</div>`:''}<div class="ops-record-actions">${opsJobButton(a.job_id)}<button class="ops-link" data-ops-open="appointmentStatus" data-ops-id="${a.id}" ${canUpdateAppointment(a)?'':'hidden'} data-ops-job="${esc(a.job_id)}">Update / delay</button></div></article>`;
 const opsInvoice = i => `<article class="ops-record"><div class="ops-record-top"><strong>${esc(i.number)}</strong>${opsStatus(i.status)}</div><p>${esc(i.homeowner||i.job_id)} · ${esc(i.category)} · ${moneyPrecise(i.amount)}</p><small>Due ${opsDate(i.due_date)} · ${esc(i.job_id)}</small><div class="ops-record-actions"><a class="ops-link" href="/api/ops/invoices/${Number(i.id)}/print" target="_blank" rel="noopener">Print invoice ↗</a>${opsJobButton(i.job_id)}<button class="ops-link" data-ops-open="invoiceStatus" data-ops-id="${i.id}" data-ops-job="${esc(i.job_id)}">Update</button></div></article>`;
 const opsTicket = t=>`<article class="ops-record"><div class="ops-record-top"><strong>${esc(t.subject)}</strong>${opsStatus(t.status)}</div><p>${esc(t.homeowner||t.job_id)} · ${esc(t.category)}</p><small>Owner: ${esc(t.assignee)} · Target: ${opsDate(t.target_date)}</small><p class="ops-small-desc">${esc(t.detail)}</p><div class="ops-record-actions">${opsJobButton(t.job_id)}<button class="ops-link" data-ops-open="ticketStatus" data-ops-id="${t.id}" data-ops-job="${esc(t.job_id)}">Update case</button></div></article>`;
 const opsTable = (headers,trs)=>`<div class="ops-table-scroll"><table class="ops-table"><thead><tr>${headers.map(h=>`<th>${esc(h)}</th>`).join('')}</tr></thead><tbody>${trs||`<tr><td colspan="${headers.length}">No records</td></tr>`}</tbody></table></div>`;
@@ -81,7 +92,7 @@ function opsModuleActions(id){let buttons={
  }[id]||[];
  return buttons.map(([title,modal,nav])=>nav?opsLink(title,nav):`<button class="button ${buttons.length===1?'primary':''} small" data-ops-open="${modal}">${esc(title)}</button>`).join('');
 }
-function opsModuleRecords(id){const d=opData(),jobs=opsModuleJobs(id),tasks=d.tasks.filter(t=>(OPS_MODULES[id]?.roles||[]).includes(t.role));
+function opsModuleRecords(id){const d=opData(),jobs=opsModuleJobs(id),tasks=d.tasks.filter(t=>state.role==='Admin'?(OPS_MODULES[id]?.roles||[]).includes(t.role):t.role===state.role);
  const head=opsPageHead(OPS_MODULES[id].kicker,OPS_MODULES[id].title,OPS_MODULES[id].desc,opsModuleActions(id));
  const welcome=`<div class="ops-note-inline"><span>ⓘ</span><span><strong>How this team works:</strong> ${esc(OPS_MODULES[id].help)}</span><button class="ops-link" data-ops-ask="${esc(OPS_MODULES[id].title)}">Ask guide →</button></div>`;
  const jobtable=opsTable(['Customer / Job','Workflow stage','Owner','Value','Action'],jobs.slice(0,25).map(j=>`<tr><td><strong>${esc(j.homeowner)}</strong><small>${esc(j.id)} · ${esc(j.service_type)}</small></td><td>${opsStatus(j.stage)}</td><td>${esc(j.assigned_sales)}</td><td>${money(j.quote_total)}</td><td>${opsJobButton(j.id)}</td></tr>`).join(''));
@@ -114,8 +125,8 @@ function opsCustomerSelect(selected='',filter=null){const arr=filter?opData().jo
 function opsModalHTML(kind,id='',job=''){
  const choices={
  storeLead:{title:'Request a consultation (demo)',desc:'A fictional storefront inquiry is converted into a tracked lead with front-desk ownership.',fields:opsFormField('homeowner','Customer name')+opsFormField('address','Project address')+opsFormField('service_type','Requested windows/doors')+opsFormField('email','Email (demo only)','email',false)+opsFormField('notes','Details of the work','textarea',false)},
- appointment:{title:'Book an operational milestone',desc:'Schedule a visit, delivery, crew assignment or customer callback.',fields:opsCustomerSelect(job)+opsFormField('kind','Appointment type','select',true,['Measurement','Vendor delivery','Installation','QA inspection','Warranty service','Follow-up call'])+opsFormField('scheduled_date','Scheduled date','date')+opsFormField('time_window','Time window / slot')+opsFormField('owner_role','Responsible team','select',true,['Front Desk','Sales','Measurement Tech','Vendor','Installation Manager','Service Tech','Customer Service'])+opsFormField('assignee','Assignee or crew','text',false)},
- appointmentStatus:{title:'Update schedule, ETA or delay',desc:'A delay reason and revised ETA appear on the dashboard and generate team alerts.',fields:opsFormField('status','Current status','select',true,['Scheduled','Delayed','Completed','Cancelled'])+opsFormField('eta_date','Revised ETA','date')+opsFormField('reason','Reason / customer impact','textarea',false)},
+ appointment:{title:'Book an operational milestone',desc:'Schedule a visit, delivery, crew assignment or customer callback.',fields:opsCustomerSelect(job)+opsFormField('kind','Appointment type','select',true,appointmentOptions())+opsFormField('scheduled_date','Scheduled date','date')+opsFormField('time_window','Time window / slot')+opsFormField('assignee','Assignee or crew','text',false)},
+ appointmentStatus:{title:'Update schedule, ETA or delay',desc:'A delay reason and revised ETA appear on the dashboard and generate team alerts.',fields:opsFormField('status','Current status','select',true,['Scheduled','Delayed','Completed','Cancelled'].filter(status=>status!=='Completed'||!['Measurement','Installation','QA inspection','Vendor delivery'].includes(opData().appointments.find(a=>String(a.id)===id)?.kind)))+opsFormField('eta_date','Revised ETA','date')+opsFormField('reason','Reason / customer impact','textarea',false)},
  invoice:{title:'Create a sample invoice',desc:'Invoice is a local record only. It does not collect payments or send emails.',fields:opsCustomerSelect(job)+opsFormField('category','Invoice category','select',true,['Deposit','Progress','Final balance','Warranty service','Other'])+opsFormField('amount','Amount ($)','number')+opsFormField('due_date','Due date','date')+opsFormField('notes','Notes','textarea',false)},
  invoiceStatus:{title:'Update invoice status',desc:'Only record Paid when external funds were independently verified.',fields:opsFormField('status','Status','select',true,['Draft','Sent','Paid — manually verified','Void'])},
  ticket:{title:'Create a tracked service case',desc:'Customer Service owns the response target and follow-up.',fields:opsCustomerSelect(job)+opsFormField('category','Issue category','select',true,['Warranty','Installation concern','Scheduling','Billing question','Other'])+opsFormField('subject','Short subject')+opsFormField('detail','Customer concern','textarea')+opsFormField('target_date','Response target','date')},
@@ -127,18 +138,20 @@ function opsModalHTML(kind,id='',job=''){
  return `<div class="modal-scrim ops-modal-scrim" id="ops-modal-scrim"><section class="modal ops-modal" role="dialog" aria-modal="true" aria-labelledby="ops-dialog-title"><div class="modal-head"><div><h2 id="ops-dialog-title">${esc(def.title)}</h2><p>${esc(def.desc)}</p></div><button class="modal-close" data-ops-close aria-label="Close">×</button></div><form id="ops-form" data-ops-kind="${esc(kind)}" data-ops-id="${esc(id)}" class="modal-body"><div class="form-error" id="ops-form-error"></div>${def.fields}<div class="modal-actions"><button type="button" class="button" data-ops-close>Cancel</button><button type="submit" class="button primary">Save record</button></div></form></section></div>`;
 }
 function opsOpen(kind,id='',job=''){
+ if(!opsActAs(kind))return;
+ if(kind==='appointmentStatus'&&!opData().appointments.some(a=>String(a.id)===id&&canUpdateAppointment(a)))return;
  document.querySelector('#modal-root').innerHTML=opsModalHTML(kind,id,job);
  document.querySelector('#ops-modal-scrim input,#ops-modal-scrim select,#ops-modal-scrim textarea')?.focus();
 }
 function opsActAs(kind){
  const role=state.role;
- const expected={appointment:['Admin','Front Desk','Sales','Measurement Tech','Installation Manager','Service Tech','Customer Service','Vendor'],appointmentStatus:['Admin','Front Desk','Measurement Tech','Vendor','Installation Manager','Service Tech','Customer Service'],invoice:['Admin','Accountant','Financing'],invoiceStatus:['Admin','Accountant'],ticket:['Admin','Customer Service','Homeowner','Service Tech','Front Desk','Warranty Coordinator'],ticketStatus:['Admin','Customer Service','Service Tech','Warranty Coordinator'],feedback:['Admin','Homeowner','Customer Service','Warranty Coordinator'],review:['Admin','Homeowner','Customer Service','Warranty Coordinator']};
- return !expected[kind]||expected[kind].includes(role);
+ const expected={storeLead:['Admin','Front Desk','Sales'],appointment:['Admin','Front Desk','Sales','Measurement Tech','Installation Manager','Service Tech','Customer Service','Vendor','Warranty Coordinator'],appointmentStatus:['Admin','Front Desk','Sales','Measurement Tech','Vendor','Installation Manager','Service Tech','Customer Service','Warranty Coordinator'],invoice:['Admin','Accountant','Financing'],invoiceStatus:['Admin','Accountant'],ticket:['Admin','Customer Service','Homeowner','Service Tech','Front Desk','Warranty Coordinator'],ticketStatus:['Admin','Customer Service','Service Tech','Warranty Coordinator'],feedback:['Admin','Homeowner','Customer Service','Warranty Coordinator'],review:['Admin','Homeowner','Customer Service','Warranty Coordinator']};
+ return kind==='appointment'?appointmentOptions().length>0:!expected[kind]||expected[kind].includes(role);
 }
 async function opsSubmit(form){
  const kind=form.dataset.opsKind,vals=Object.fromEntries(new FormData(form).entries()),id=form.dataset.opsId;
  let path='',data={...vals,actor:state.role};
- if(kind==='storeLead'){path='/api/jobs';data={...vals,actor:'Front Desk',lead_source:'Storefront'};}
+ if(kind==='storeLead'){path='/api/jobs';data={...vals,actor:state.role,lead_source:'Storefront'};}
  else if(kind==='appointment')path='/api/ops/appointments';
  else if(kind==='appointmentStatus')path=`/api/ops/appointments/${encodeURIComponent(id)}/status`;
  else if(kind==='invoice')path='/api/ops/invoices';

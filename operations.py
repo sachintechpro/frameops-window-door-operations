@@ -41,7 +41,7 @@ def ensure_date(value, label='Date'):
 
 def notify(con, job_id, title, detail, roles=('Admin', 'Front Desk', 'Customer Service')):
     t = stamp()
-    for role in roles:
+    for role in set(roles):
         con.execute('INSERT INTO notifications(job_id,role,title,detail,created_at) VALUES(?,?,?,?,?)',
                     (job_id, role, title, detail[:300], t))
     con.execute('INSERT INTO events(job_id,label,detail,actor,created_at) VALUES(?,?,?,?,?)',
@@ -109,14 +109,22 @@ def initialize_ops(con):
 
 
 def sync_milestone(con, job_id, action, fields, actor):
-    """Persist a scheduled milestone from the legacy end-to-end workflow."""
+    """Persist the appointment for the job workflow transition."""
     if action not in ('schedule_measurement', 'schedule_install'):
         return
     kind = 'Measurement' if action == 'schedule_measurement' else 'Installation'
     date_value = ensure_date(fields.get('date'), 'Appointment date')
     role = 'Measurement Tech' if kind == 'Measurement' else 'Installation Manager'
-    con.execute('INSERT INTO appointments(job_id,kind,scheduled_date,time_window,owner_role,assignee,status,eta_date,created_at,updated_at) VALUES(?,?,?,?,?,?,?,?,?,?)',
-                (job_id,kind,date_value,'Time to confirm',role,'Unassigned','Scheduled',date_value,stamp(),stamp()))
+    existing = con.execute('SELECT id FROM appointments WHERE job_id=? AND kind=? ORDER BY id DESC LIMIT 1',
+                           (job_id, kind)).fetchone()
+    window = str(fields.get('time_window') or 'Time to confirm')[:80]
+    assignee = str(fields.get('assignee') or 'Unassigned')[:100]
+    if existing:
+        con.execute("UPDATE appointments SET scheduled_date=?,eta_date=?,time_window=?,owner_role=?,assignee=?,status='Scheduled',delay_reason='',updated_at=? WHERE id=?",
+                    (date_value,date_value,window,role,assignee,stamp(),existing['id']))
+    else:
+        con.execute('INSERT INTO appointments(job_id,kind,scheduled_date,time_window,owner_role,assignee,status,eta_date,created_at,updated_at) VALUES(?,?,?,?,?,?,?,?,?,?)',
+                    (job_id,kind,date_value,window,role,assignee,'Scheduled',date_value,stamp(),stamp()))
 
 
 def dashboard(con):
@@ -195,17 +203,37 @@ def guide(question, context='',role='Admin'):
             'view':'overview','suggestions':['How do I process a lead?','What happens after installation?','How are invoices managed?']}
 
 
-def mutation(con, path, data):
+def mutation(con, path, data, job_action):
     actor=str(data.get('actor','Admin'))[:60]
     now=stamp()
     if path=='/api/ops/appointments':
-        role_check(actor,('Front Desk','Sales','Measurement Tech','Installation Manager','Service Tech','Customer Service','Vendor'))
-        job_id=str(data.get('job_id','')); ensure_job(con,job_id)
+        role_check(actor,('Front Desk','Sales','Measurement Tech','Installation Manager','Service Tech','Customer Service','Vendor','Warranty Coordinator'))
+        job_id=str(data.get('job_id','')); job=ensure_job(con,job_id)
         kind=str(data.get('kind','')).strip()[:80]
         check(kind in ('Measurement','Vendor delivery','Installation','QA inspection','Warranty service','Follow-up call'),'Choose an appointment type')
         scheduled=ensure_date(data.get('scheduled_date'))
+        if kind in ('Measurement', 'Installation'):
+            action = 'schedule_measurement' if kind == 'Measurement' else 'schedule_install'
+            job_action(con, job_id, action, {**data, 'date':scheduled}, actor)
+            ident = con.execute('SELECT MAX(id) FROM appointments WHERE job_id=? AND kind=?',
+                                (job_id, kind)).fetchone()[0]
+            return {'ok':True,'id':ident,'message':'Appointment scheduled and next team notified'}
+        gates = {'Vendor delivery': ('Materials Ordered', ('Vendor','Installation Manager')),
+                 'QA inspection': ('Installed', ('Service Tech','Installation Manager')),
+                 'Warranty service': ('Closed', ('Service Tech','Customer Service','Warranty Coordinator'))}
+        if kind in gates:
+            required_stage, owners = gates[kind]
+            role_check(actor, owners)
+            check(job['stage'] == required_stage, f'{kind} requires a job at {required_stage}')
+            check(not con.execute("SELECT 1 FROM appointments WHERE job_id=? AND kind=? AND status IN ('Scheduled','Delayed')",
+                                  (job_id,kind)).fetchone(), 'Update the existing appointment instead')
+        else:
+            owners = ('Front Desk','Sales','Customer Service')
+            role_check(actor, owners)
         window=str(data.get('time_window','To confirm')).strip()[:80]
-        owner=str(data.get('owner_role') or actor)[:80]
+        default_owner = actor if actor in owners else owners[0]
+        owner = str(data.get('owner_role') or default_owner)
+        check(owner in owners, 'Choose a team responsible for this appointment type')
         assignee=str(data.get('assignee','Unassigned')).strip()[:100]
         con.execute('INSERT INTO appointments(job_id,kind,scheduled_date,time_window,owner_role,assignee,status,eta_date,created_at,updated_at) VALUES(?,?,?,?,?,?,?,?,?,?)',
                     (job_id,kind,scheduled,window,owner,assignee,'Scheduled',scheduled,now,now))
@@ -214,9 +242,15 @@ def mutation(con, path, data):
         return {'ok':True,'id':ident,'message':'Appointment scheduled and teams notified'}
     m=re.fullmatch(r'/api/ops/appointments/(\d+)/status',path)
     if m:
-        role_check(actor,('Front Desk','Measurement Tech','Vendor','Installation Manager','Service Tech','Customer Service'))
+        role_check(actor,('Front Desk','Sales','Measurement Tech','Vendor','Installation Manager','Service Tech','Customer Service','Warranty Coordinator'))
         x=con.execute('SELECT * FROM appointments WHERE id=?',(m.group(1),)).fetchone();check(x,'Appointment not found')
         status=str(data.get('status',''));check(status in ('Scheduled','Delayed','Completed','Cancelled'),'Invalid status')
+        check(actor == 'Admin' or actor == x['owner_role'] or actor == 'Front Desk'
+              or (actor == 'Installation Manager' and x['kind'] in ('Installation','Vendor delivery','QA inspection')),
+              'Only the responsible team can update this appointment')
+        check(x['status'] != 'Completed', 'Completed appointments cannot be changed')
+        check(status != 'Completed' or x['kind'] not in ('Measurement','Installation','QA inspection','Vendor delivery'),
+              'Complete the corresponding step on the job to record this milestone')
         reason=str(data.get('reason','')).strip()[:500]
         check(status!='Delayed' or len(reason)>=5,'A delay needs a reason (at least five characters)')
         eta=ensure_date(data.get('eta_date') or x['eta_date'] or x['scheduled_date'],'Revised ETA')
@@ -248,11 +282,14 @@ def mutation(con, path, data):
         return {'ok':True,'message':f'Invoice marked {status.lower()}'}
     if path=='/api/ops/tickets':
         role_check(actor,('Customer Service','Homeowner','Service Tech','Front Desk','Warranty Coordinator'))
-        job_id=str(data.get('job_id',''));ensure_job(con,job_id)
+        job_id=str(data.get('job_id',''));job=ensure_job(con,job_id)
         category=str(data.get('category','')).strip();check(category in ('Warranty','Installation concern','Scheduling','Billing question','Other'),'Invalid ticket category')
+        check(category != 'Warranty' or job['stage'] == 'Closed', 'Warranty service requires a closed job')
         subject=str(data.get('subject','')).strip()[:140];detail=str(data.get('detail','')).strip()[:1200]
         check(len(subject)>=4 and len(detail)>=8,'Subject and description are required')
         due=ensure_date(data.get('target_date') or day(2),'Response target')
+        check(not con.execute("SELECT 1 FROM service_tickets WHERE job_id=? AND category=? AND subject=? COLLATE NOCASE AND detail=? COLLATE NOCASE AND status NOT IN ('Resolved','Cancelled')",
+                              (job_id,category,subject,detail)).fetchone(), 'This service case is already open')
         con.execute('INSERT INTO service_tickets(job_id,category,subject,detail,assignee,status,target_date,created_at,updated_at) VALUES(?,?,?,?,?,?,?,?,?)',
                     (job_id,category,subject,detail,'Customer Service','Open',due,now,now))
         notify(con,job_id,'Customer service case opened',f'{category}: {subject} · target {due}',('Admin','Customer Service','Service Tech','Warranty Coordinator'))
@@ -277,7 +314,7 @@ def mutation(con, path, data):
         con.execute('INSERT INTO satisfaction(job_id,rating,feedback,contact_permission,review_status,updated_at) VALUES(?,?,?,?,?,?) ON CONFLICT(job_id) DO UPDATE SET rating=excluded.rating, feedback=excluded.feedback,contact_permission=excluded.contact_permission,updated_at=excluded.updated_at',
                     (job_id,rating,notes,consent,'Not requested',now))
         notify(con,job_id,'Customer satisfaction recorded',f'{rating}/5 · {notes[:150] or "No additional comment"}',('Admin','Customer Service','Warranty Coordinator'))
-        if rating<=3:
+        if rating<=3 and not con.execute("SELECT 1 FROM service_tickets WHERE job_id=? AND subject='Satisfaction recovery follow-up' AND status NOT IN ('Resolved','Cancelled')", (job_id,)).fetchone():
             con.execute('INSERT INTO service_tickets(job_id,category,subject,detail,assignee,status,target_date,created_at,updated_at) VALUES(?,?,?,?,?,?,?,?,?)',
                         (job_id,'Installation concern','Satisfaction recovery follow-up',notes or 'Follow up on customer satisfaction','Customer Service','Open',day(1),now,now))
         return {'ok':True,'message':'Satisfaction feedback recorded; follow-up created when needed'}

@@ -91,6 +91,9 @@ Object.defineProperty(window,'localStorage',{configurable:true,value:{
         assert result['ok']
         assert page.evaluate("FrameOpsDemoJourney.read().notifications.some(n=>n.role==='Sales'&&n.title==='New lead qualified')")
         assert not errors,errors
+        assert page.locator('[data-nav="business-settings"]').is_hidden()
+        assert page.locator('[data-nav="frontdesk"]').is_visible()
+        page.locator('#role-select').select_option('Admin')
         # Mobile: menu, business settings, social URL field all accessible.
         page.set_viewport_size({'width':390,'height':844})
         page.locator('#mobile-menu').click()

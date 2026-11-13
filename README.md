@@ -67,6 +67,18 @@ Original illustrations are bundled as SVG files; there are no copied manufacture
 - **Customer Service:** case coordination, satisfaction follow-up and issue resolution.
 - **Warranty Coordinator:** warranty follow-up, review invitations and service recovery.
 
+### Account sign-in and job handoffs
+
+The public demo uses **Working as** to preview each department’s menu. Admin sees the full demo menu. For account sign-in, set `FRAMEOPS_ACCOUNTS` in the server environment to a JSON object keyed by username. Each account has a `role` and a `password_hash`. A Homeowner account also needs a `job_id`, such as `F-1008` for the seeded example. Generate each hash locally with:
+
+```sh
+python -c 'from getpass import getpass; from accounts import password_hash; print(password_hash(getpass()))'
+```
+
+Store the account configuration in the host’s secret settings. Supplying accounts enables sign-in and disables demo role switching. Host over HTTPS and set `FRAMEOPS_SECURE_COOKIE=1` if your hosting platform does not set `RENDER`. For a local portfolio walkthrough, use `PUBLIC_DEMO=1 python server.py`.
+
+Each job advances one milestone per action. The server commits the stage change, completed assignment, next assignment and notifications together. The same workflow handles appointment bookings from both the job and department screens. Zero-deposit contracts have an explicit Accounting clearance step. Final QA and recorded payment must both be complete before Accounting can close the job and activate warranty.
+
 ### Delivery and project-management thinking
 
 This case study demonstrates a *value-stream-oriented operating model* through one job lifecycle rather than separate departmental status trackers. Teams have clear decision points, documented dependencies, visible work queues and event-based notifications.
