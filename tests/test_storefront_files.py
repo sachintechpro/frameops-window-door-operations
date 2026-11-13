@@ -28,7 +28,7 @@ class StorefrontIntegrity(unittest.TestCase):
     def test_scripts_social_settings_and_journey_in_html(self):
         html=(ROOT/'public/index.html').read_text()
         js=(ROOT/'public/business_settings.js').read_text()
-        for name in ('catalog','storefront','demo_journey','business_settings'):
+        for name in ('catalog','storefront','demo_journey','business_settings','quick_checkout'):
             self.assertIn(f'<script src="/{name}.js"></script>',html)
         self.assertIn('data-nav="business-settings"',html)
         for platform in ('facebook','x','medium','linkedin','youtube','instagram','tiktok'):

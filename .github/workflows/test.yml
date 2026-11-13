@@ -23,3 +23,9 @@ jobs:
           node --check public/catalog.js
           node --check public/demo_journey.js
           node --check public/business_settings.js
+
+      - name: Check quote pricing, discount ceilings and customer journey rules
+        run: node --test tests/checkout_rules.test.js
+
+      - name: Check fast quote and portal JavaScript syntax
+        run: node --check public/quick_checkout.js

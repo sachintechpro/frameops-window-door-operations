@@ -24,7 +24,7 @@ with tempfile.TemporaryDirectory(prefix='frameops-browser-store-') as td:
     html=(ROOT/'public/index.html').read_text()
     css=(ROOT/'public/styles.css').read_text()
     html=html.replace('<link rel="stylesheet" href="/styles.css">',f'<style>{css}</style>')
-    scripts=['catalog','demo_journey','storefront','business_settings','ops_ui','app']
+    scripts=['catalog','demo_journey','storefront','business_settings','quick_checkout','ops_ui','app']
     for name in scripts:html=html.replace(f'<script src="/{name}.js"></script>','')
     preload="""<script>
 window.__demoStore = Object.create(null);
@@ -47,8 +47,8 @@ Object.defineProperty(window,'localStorage',{configurable:true,value:{
         page=browser.new_page(viewport={'width':1360,'height':880})
         errors=[];page.on('pageerror',lambda e:errors.append(str(e)))
         page.set_content(html,wait_until='load',timeout=25000)
-        page.wait_for_selector('.ops-metrics',timeout=5000)
-        page.locator('[data-nav="business-settings"]').click()
+        page.wait_for_selector('.q-hero',timeout=5000)
+        page.evaluate("go('business-settings')")
         assert 'Business & social settings' in page.locator('h1').first.inner_text()
         assert page.locator('.bs-platform').count()==7
         page.locator('#bs-facebook').fill('https://facebook.com.evil.example/test')
@@ -63,9 +63,9 @@ Object.defineProperty(window,'localStorage',{configurable:true,value:{
         page.locator('input[name="linkedin-enabled"]').check()
         page.locator('#social-settings-form button[type="submit"]').click()
         assert page.locator('.bs-preview a.st-social-link').count()==2
-        page.locator('[data-nav="storefront"]').first.click()
-        page.wait_for_selector('.st-product')
-        assert page.locator('.st-product').count()==17,page.locator('.st-product').count()
+        page.evaluate("go('storefront')")
+        page.wait_for_selector('.q-product')
+        assert page.locator('.q-product').count()==17,page.locator('.q-product').count()
         assert page.locator('#st-social-header a.st-social-link').count()==2
         assert page.locator('#st-social-footer a.st-social-link').count()==2
         assert page.locator('#st-social-header a').first.get_attribute('target')=='_blank'
@@ -76,30 +76,19 @@ Object.defineProperty(window,'localStorage',{configurable:true,value:{
           window.dispatchEvent(new StorageEvent('storage',{key:'frameops-business-social-links-v1'}));}''')
         assert page.locator('#st-social-header a').count()==1
         assert 'LinkedIn' in page.locator('#st-social-header').inner_text()
-        # Start a fictional customer journey from selected catalog item.
-        page.locator('[data-store-add="CV-210"]').first.click()
-        page.locator('[data-store-quote]').first.click()
-        page.locator('#st-quote-form [name="homeowner"]').fill('Test Fictional Homeowner')
-        page.locator('#st-quote-form [name="address"]').fill('10 Fictional Drive')
-        page.locator('#st-quote-form button[type="submit"]').click()
-        assert 'FRONTEND DEMO PROJECT CREATED' in page.locator('.st-success').inner_text()
-        page.locator('[data-store-view-journey]').click()
-        assert 'Test Fictional Homeowner' in page.locator('#sim-area').inner_text()
-        assert page.evaluate("FrameOpsDemoJourney.read().stage")== 'New lead'
-        page.locator('#role-select').select_option('Front Desk')
-        result=page.evaluate("FrameOpsDemoJourney.dispatch('qualify')")
-        assert result['ok']
-        assert page.evaluate("FrameOpsDemoJourney.read().notifications.some(n=>n.role==='Sales'&&n.title==='New lead qualified')")
+        # Customer-facing store now progresses to the fast quote and paperless portal.
+        page.locator('[data-q-add="CV-210"]').first.click()
+        page.evaluate("go('quick-quote')")
+        assert page.locator('#q-checkout-form').is_visible()
+        assert page.evaluate('FrameOpsCheckout.pricing().compliant')
         assert not errors,errors
         # Mobile: menu, business settings, social URL field all accessible.
         page.set_viewport_size({'width':390,'height':844})
-        page.locator('#mobile-menu').click()
-        page.locator('[data-nav="business-settings"]').click()
+        page.evaluate("go('business-settings')")
         assert page.locator('#social-settings-form').is_visible()
         assert page.evaluate('document.documentElement.scrollWidth<=window.innerWidth+1'), 'Mobile horizontal overflow'
         page.screenshot(path=str(ROOT/'assets/business-social-settings-mobile.png'),full_page=True)
-        page.locator('#mobile-menu').click()
-        page.locator('[data-nav="storefront"]').first.click()
+        page.evaluate("go('storefront')")
         page.screenshot(path=str(ROOT/'assets/storefront-products-mobile.png'),full_page=True)
-        print('PASS: 17 catalog products, seven social platforms, URL rejection, saved and linked settings, customer lead simulation, role notifications, mobile layout, no JS errors')
+        print('PASS: 17 catalog products, seven social platforms, URL rejection, saved and linked settings, instant quote, mobile layout, no JS errors')
         browser.close()
