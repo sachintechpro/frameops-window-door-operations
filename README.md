@@ -6,7 +6,7 @@
 
 FrameOps illustrates how one end-to-end value stream can replace disconnected spreadsheets, phone calls, and handoffs with a shared homeowner/job record, visible dependencies, and accountable work queues.
 
-> **Interactive portfolio demo, not a production customer system.** All included homeowners, addresses, suppliers, and financial records are fictional. Anyone using the public demo must enter fictional data only. Role switching demonstrates journeys and **does not provide authentication or enforce real access control**.
+> **Interactive portfolio demo, not a production customer system.** All included homeowners, addresses, suppliers, and financial records are fictional. Anyone using the public demo must enter fictional data only. Use **Working as** to preview each role. The public demo uses a shared fictional workspace. Account sign-in is available on deployments with configured accounts.
 
 ![FrameOps operations dashboard](assets/dashboard.png)
 
@@ -87,16 +87,23 @@ The design draws on **Lean flow and value-stream principles**—removing waiting
 
 **Illustrative outcomes to evaluate in a real implementation:** lead response time, quote cycle time, lead-to-contract conversion, elapsed time from funding to installation, rework/punch-list frequency, overdue vendor handoffs, and cash collection time. No measured improvement is claimed in this prototype.
 
-## Explore
+## Try a live job handoff
 
-1. Start with **Admin Dashboard** and inspect the eight seeded fictional homeowner jobs.
-2. Open **Leads & Jobs**, select any record, and explore the complete journey, product measurements, financials, documents, and activity history.
-3. Change **Working as** to experience the front desk, sales, field, supplier, accounting, and homeowner roles.
-4. Use the next-stage action in a job record. A successful action updates the shared stage, creates the next department's task, and generates in-app notifications.
-5. Test the blockers: procurement requires funding, scheduling requires materials and any applicable permit or insurance checks, and closeout requires passed QA and reconciled payments.
-6. Open **Ask FrameOps** to learn a workflow, and use **Documents & Invoices** or **Customer Service** to explore trackable, post-installation records.
-7. Open **Business & Social Settings** to enable fictional social profile URLs and preview them on the storefront.
-8. In **Customer Storefront**, select items and create a fictional estimate request; then use **Live Journey Simulator** to test sample payments, rescheduling and cross-role alerts.
+1. Open the [live demo](https://frameops-operations.onrender.com/) and switch **Working as** from **Admin** to **Front Desk**. Admin has the full demo menu. Front Desk has lead intake, sales coordination, customer service, documents, a work queue, and notifications.
+2. Open **Front Desk → New lead**. Enter a fictional homeowner and address, then open **My Work Queue**. The new job starts at **New Lead** with a qualification task.
+3. Open the job and select **Qualify lead**. FrameOps completes the Front Desk task and moves the job to **Qualified**.
+4. Switch to **Sales**. In **My Work Queue**, find one **Schedule an on-site measurement** task for that job. In **Notifications**, look for **Lead qualified**. Open the task and book the measurement.
+5. Switch to **Measurement Tech**. The work queue shows **Complete field measurements** for the same job. The earlier qualification and booking steps are complete.
+
+Each successful stage change completes the current assignment and records the next assignment and in-app notifications together. Retrying the same transition cannot create another handoff. Admin follows the same stage rules as every other role.
+
+### Job sequence
+
+New Lead → Qualified → Measurement Scheduled → Measurements Complete → Proposal Sent → Proposal Approved → Contract Signed → Funding Cleared → Materials Ordered → Materials Received → Installation Scheduled → Installed → QA Passed → Closed
+
+Funding must clear before procurement. Installation scheduling requires materials and any applicable permit or insurance approvals. Closeout requires passed QA and a paid balance. Warranty becomes active at closeout.
+
+For the browser-only storefront walkthrough, switch back to **Admin**, open **Customer Storefront**, and start a fictional estimate request. **Live Journey Simulator** shows the sample project, simulated payments, and schedule changes.
 
 ![FrameOps mobile workspace](assets/mobile.png)
 
@@ -104,7 +111,7 @@ The design draws on **Lean flow and value-stream principles**—removing waiting
 
 The prototype uses Python's standard-library HTTP server, SQLite, and plain HTML/CSS/JavaScript. It has no paid dependencies. Finance approvals and payments are manually recorded mock workflow states, not real bank, lender, or payment transactions. Contract acknowledgement is not a legal e-signature. Notifications are in-app only. Public deployment disables uploaded documents and uses a shared, resettable demo database.
 
-**Before real customer use:** implement authentication, enforced per-role and per-homeowner authorization, real audit logs and consent management, private document storage, backed-up database, secured communications, payment provider, approved financing and e-signature integrations, and jurisdiction-specific installation/permit/warranty rules.
+**Before real customer use:** review the configured account and access model, and add production audit logs, consent management, private document storage, database backups, secured communications, and the required payment, financing, e-signature, permit, and warranty integrations.
 
 For detailed scope, domain entities, workflow rules and future roadmap, see [DESIGN.md](DESIGN.md), [OPERATING_GUIDE.md](OPERATING_GUIDE.md), and [PRODUCTION_READINESS.md](PRODUCTION_READINESS.md).
 
@@ -114,9 +121,11 @@ For detailed scope, domain entities, workflow rules and future roadmap, see [DES
 Requires Python 3.10+ and no additional packages.
 
 ```sh
-python server.py
+PUBLIC_DEMO=1 python server.py
 ```
 
 Open `http://localhost:10000`. For a public/shared demo environment set `PUBLIC_DEMO=1` so file uploads are disabled and demo leads are capped. Render can read the included `render.yaml`; use a Python web service and the start command `python server.py`. Disk-based SQLite records are not durable on a standard ephemeral Render filesystem.
+
+Run the workflow and HTTP integration tests with `python -m unittest discover -s tests -v`.
 
 </details>
