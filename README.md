@@ -2,7 +2,7 @@
 
 **A working cross-functional operations command center for residential window and door installation businesses.**
 
-**[Explore the live FrameOps application](https://frameops-operations.onrender.com/)** · [Source repository](https://github.com/sachintechpro/frameops-window-door-operations)
+**[Explore the live FrameOps application](https://frameops-operations.onrender.com/)** · [Forward deployment case study](CASE_STUDY.md) · [Source repository](https://github.com/sachintechpro/frameops-window-door-operations)
 
 FrameOps illustrates how one end-to-end value stream can replace disconnected spreadsheets, phone calls, and handoffs with a shared homeowner/job record, visible dependencies, and accountable work queues.
 
