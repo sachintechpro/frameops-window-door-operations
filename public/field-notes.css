@@ -494,3 +494,46 @@ body.qa-has-rail #notice:not(:empty){background:#e7f2e5;border-color:#c5dcc2;col
 @media(prefers-reduced-motion:reduce){
  body:not(.qa-has-rail) .nav-link{transition:none}
 }
+
+
+/* Finishing surfaces / shared states — keep active controls, status and
+   business-specific technical symbols visually aligned with the field notes. */
+body:not(.qa-has-rail) .st-filter.active{
+  background:#305742;color:#fffdf4;border-color:#305742;
+}
+body:not(.qa-has-rail) .st-button.selected{
+  background:#e5efe2;color:#2e6549;border-color:#a7c8a6;
+}
+body:not(.qa-has-rail) .st-button.light{
+  background:#f8f7ee;color:#3c624b;border-color:#d2dbce;
+}
+body:not(.qa-has-rail) .st-draft-icon{
+  background:#e2ebe0;color:#305843;border-radius:2px;
+}
+body:not(.qa-has-rail) .st-service-num{color:#a26545;font-family:var(--mono)}
+body:not(.qa-has-rail) .st-quote-summary{background:#edf2e8;border-color:#d0dfce;border-radius:2px}
+body:not(.qa-has-rail) .st-hero-art-note{border-radius:2px}
+body:not(.qa-has-rail) .ops-status{background:#e5efe5;color:#3d6549;border-radius:2px}
+body:not(.qa-has-rail) .ops-status.hot{background:#f9e9e0;color:#a2493d}
+body:not(.qa-has-rail) .ops-status.okay{background:#e6f2e7;color:#2c6c4b}
+body:not(.qa-has-rail) .ops-progress{background:#e6eee4;border-radius:2px}
+body:not(.qa-has-rail) .ops-progress>*{background:#71977a}
+body:not(.qa-has-rail) .ops-hero-tag{
+  background:#edf2e7;color:#426c50;border-color:#cbdcc9;border-radius:2px
+}
+body:not(.qa-has-rail) .st-social-caption{color:#496c55;font-family:var(--mono)}
+body.qa-has-rail .qa-section-head{
+  position:relative;
+  isolation:isolate;
+  overflow:hidden;
+}
+body.qa-has-rail .qa-section-head:after{
+  content:"";
+  position:absolute;right:0;top:0;bottom:0;width:min(480px,40%);
+  background:url("/images/field-notes-elevation.svg") center / contain no-repeat;
+  opacity:.12;pointer-events:none;z-index:-1;
+}
+body.qa-has-rail .qa-section-head>*{position:relative;z-index:1}
+@media(max-width:650px){
+  body.qa-has-rail .qa-section-head:after{display:none}
+}
