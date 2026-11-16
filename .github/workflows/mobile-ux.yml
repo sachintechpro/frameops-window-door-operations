@@ -4,6 +4,8 @@ on:
     branches: [main]
     paths:
       - "public/index.html"
+      - "public/journey.css"
+      - "tests/browser_journey_ux.py"
       - "public/fde-implementation.html"
       - "public/styles.css"
       - "public/field-notes.css"
@@ -33,6 +35,15 @@ jobs:
           python -m playwright install --with-deps chromium
       - name: Run isolated 320, 390, 768 and 1440 px browser tests
         run: python tests/browser_mobile_ux.py
+      - name: Verify Live Journey Simulator on phone tablet and desktop
+        run: python tests/browser_journey_ux.py
+      - name: Upload Journey Simulator screenshots
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: frameops-journey-responsive-evidence
+          path: artifacts/journey-ux/
+          if-no-files-found: warn
       - name: Run FDE case-study responsive browser checks (320–1440 px)
         run: python tests/browser_fde_ux.py
       - name: Upload FDE responsive screenshots
