@@ -110,7 +110,7 @@ def audit(browser,width,height):
         else:
             page.evaluate("(view)=>go(view)",route)
         page.locator("#app > *").first.wait_for()
-        page.wait_for_timeout(50)
+        page.wait_for_timeout(250)  # let mobile drawer closing animation finish before screenshots
         result=metrics(page,route,width)
         report.append(result)
         if not result["routeRendered"]:failures.append(f"{route}: no heading")
@@ -119,6 +119,8 @@ def audit(browser,width,height):
             failures.append(f"{route}: horizontal overflow {result['contentWidth']}>{result['documentWidth']}; offenders={result['contentOffenders']}")
         if result["offscreenActions"]:
             failures.append(f"{route}: offscreen interactive controls {result['offscreenActions']}")
+        if route in ("frontdesk","leads","measurements","vendors","installation","financing","accounting","documents","warranty","customer-service") and width<=390:
+            assert page.locator(".ops-table tbody td[data-cell-label]").count()>0, f"{route}: mobile card labels not hydrated"
         if result["visibleActions"]<1 and route not in ("workflow",):
             failures.append(f"{route}: no actionable controls")
         if width in (320,390,1440):
