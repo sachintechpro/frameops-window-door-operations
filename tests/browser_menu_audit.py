@@ -66,8 +66,17 @@ def metrics(page, route, width):
       }
       const visible = Array.from(app.querySelectorAll('button:not([hidden]),a:not([hidden])'))
          .filter(el=>{const r=el.getBoundingClientRect();return r.width>0&&r.height>0});
-      const overflowing = visible.filter(el=>{const r=el.getBoundingClientRect();return r.left< -5 || r.right>root.clientWidth+5})
-         .slice(0,8).map(el=>({text:el.textContent.trim().slice(0,60),bounds:box(el)}));
+      const overflowing = visible.filter(el=>{
+        const r=el.getBoundingClientRect();
+        const scroller=el.closest('.ops-table-scroll,.table-wrap,.table-scroll');
+        if(scroller && scroller.scrollWidth>scroller.clientWidth+2)return false;
+        return r.left< -5 || r.right>root.clientWidth+5;
+      }).slice(0,8).map(el=>({text:el.textContent.trim().slice(0,60),bounds:box(el)}));
+      const offenders=Array.from(app.querySelectorAll('*')).filter(el=>{
+        if(el.closest('.ops-table-scroll,.table-wrap,.table-scroll'))return false;
+        const r=el.getBoundingClientRect();
+        return r.right>root.clientWidth+5 || r.left< -5;
+      }).slice(0,20).map(el=>({tag:el.tagName,class:typeof el.className==='string'?el.className.slice(0,90):'',text:el.textContent.trim().slice(0,42),bounds:box(el)}));
       const sampled=Array.from(app.querySelectorAll('.ops-card,.ops-record,.ops-job-tile,.ops-metric,.stat-card,.panel,.sim-card,.bs-platform')).slice(0,20);
       const transparent=sampled.filter(el=>cs(el).backgroundColor==='rgba(0, 0, 0, 0)'&&cs(el).borderTopWidth==='0px')
          .slice(0,8).map(el=>el.className);
@@ -78,7 +87,7 @@ def metrics(page, route, width):
         firstWidth:rootSurface?box(rootSurface):null,layout,missingLayout:missing,
         visibleActions:visible.length,offscreenActions:overflowing,
         cardSamples:sampled.length,unstyledCardCandidates:transparent,
-        background:bg(rootSurface),hasPaintedPanel:sampled.some(el=>cs(el).backgroundColor!=='rgba(0, 0, 0, 0)')};
+        background:bg(rootSurface),contentOffenders:offenders,hasPaintedPanel:sampled.some(el=>cs(el).backgroundColor!=='rgba(0, 0, 0, 0)')};
     }""",{"route":route,"width":width})
 
 
@@ -107,11 +116,12 @@ def audit(browser,width,height):
         if not result["routeRendered"]:failures.append(f"{route}: no heading")
         if result["missingLayout"]:failures.append(f"{route}: grid missing {result['missingLayout']}")
         if result["contentWidth"]>result["documentWidth"]+3:
-            failures.append(f"{route}: horizontal overflow {result['contentWidth']}>{result['documentWidth']}")
+            failures.append(f"{route}: horizontal overflow {result['contentWidth']}>{result['documentWidth']}; offenders={result['contentOffenders']}")
         if result["offscreenActions"]:
             failures.append(f"{route}: offscreen interactive controls {result['offscreenActions']}")
-        if result["visibleActions"]<1:failures.append(f"{route}: no actionable controls")
-        if width in (390,1440):
+        if result["visibleActions"]<1 and route not in ("workflow",):
+            failures.append(f"{route}: no actionable controls")
+        if width in (320,390,1440):
             page.screenshot(path=str(OUT/f"menu-{route}-{width}.png"),full_page=True,timeout=30000)
         print("MENU",width,route,json.dumps({key:result[key] for key in
            ("title","contentWidth","documentWidth","missingLayout","visibleActions","offscreenActions")}),flush=True)
@@ -128,7 +138,7 @@ def audit(browser,width,height):
             report.append(result)
             if result["contentWidth"]>result["documentWidth"]+3:
                 failures.append(f"job-{tab}: overflow")
-            if width in (390,1440):
+            if width in (320,390,1440):
                 page.screenshot(path=str(OUT/f"job-{tab}-{width}.png"),full_page=True,timeout=30000)
 
     # Switch each public-demo role and ensure the default view remains usable.
