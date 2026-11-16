@@ -2,13 +2,18 @@
 
 **A working cross-functional operations command center for residential window and door installation businesses.**
 
-**[Explore the live FrameOps application](https://frameops-operations.onrender.com/)** · [Forward deployment case study](CASE_STUDY.md) · [Source repository](https://github.com/sachintechpro/frameops-window-door-operations)
+**[Explore the live FrameOps application](https://frameops-operations.onrender.com/)** · **[Interactive FDE Implementation](https://frameops-operations.onrender.com/fde-implementation.html)** · [Forward deployment case study](CASE_STUDY.md) · [Source repository](https://github.com/sachintechpro/frameops-window-door-operations)
 
 FrameOps illustrates how one end-to-end value stream can replace disconnected spreadsheets, phone calls, and handoffs with a shared homeowner/job record, visible dependencies, and accountable work queues.
 
 > **Interactive portfolio demo, not a production customer system.** All included homeowners, addresses, suppliers, and financial records are fictional. Anyone using the public demo must enter fictional data only. Use **Working as** to preview each role. The public demo uses a shared fictional workspace. Account sign-in is available on deployments with configured accounts.
 
 ![FrameOps operations dashboard](assets/dashboard.png)
+
+
+## FDE Implementation — inspectable delivery evidence
+
+Open the [interactive FDE implementation walkthrough](https://frameops-operations.onrender.com/fde-implementation.html) from the app sidebar or directly. It connects eight evidence areas—discovery, requirements, architecture, engineering, testing, deployment, handover and value—to source files, artifacts, the current running service, and safe read-only API probes. Each area distinguishes implemented behavior from customer rollout work that remains hypothetical. The existing operations and QA Bench workflows are unchanged.
 
 ## FrameOps 2.0 — operations command center
 
