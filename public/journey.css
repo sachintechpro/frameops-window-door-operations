@@ -1,0 +1,488 @@
+/* FRAMEOPS — Live Journey Simulator
+   Presentation only. Scoped to #sim-area and .sim-modal-backdrop.
+   Existing role logic, demo records, action handlers and event history are unchanged. */
+#sim-area{
+  --sim-ink:#273d32;
+  --sim-muted:#607366;
+  --sim-paper:#fffdf8;
+  --sim-line:#d7ddd0;
+  --sim-forest:#244937;
+  --sim-copper:#a26040;
+  --sim-sage:#e9efe6;
+  width:100%;
+  max-width:1360px;
+  min-width:0;
+  margin:0 auto;
+  padding:clamp(20px,2.7vw,38px) clamp(16px,3.5vw,52px) 110px;
+  color:var(--sim-ink);
+  font-family:var(--sans,"IBM Plex Sans","Segoe UI",sans-serif);
+  line-height:1.58;
+  overflow-wrap:break-word;
+}
+#sim-area *, .sim-modal-backdrop *{box-sizing:border-box}
+#sim-area :where(.sim-top,.sim-title,.sim-summary,.sim-main,.sim-card,.sim-actions,.sim-schedules,.sim-inbox,.sim-timeline,.sim-message){min-width:0}
+#sim-area .sim-eyebrow{
+  display:block;
+  font:600 10px/1.5 var(--mono,"IBM Plex Mono",monospace);
+  color:#a05c3b;
+  letter-spacing:.085em;
+  text-transform:uppercase;
+}
+#sim-area .sim-top{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  flex-wrap:wrap;
+  gap:12px 22px;
+  padding:0 0 15px;
+  margin-bottom:26px;
+  border-bottom:1px solid #cdd5c9;
+}
+#sim-area .sim-top-actions{display:flex;align-items:center;gap:10px;flex-wrap:wrap;min-width:0}
+#sim-area .sim-text-button{
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  border:1px solid #bdcfbc;
+  background:#fffdf8;
+  color:#335b43;
+  border-radius:2px;
+  font:600 12px/1.3 var(--sans,"IBM Plex Sans",sans-serif);
+  min-height:41px;
+  padding:9px 14px;
+  white-space:normal;
+  cursor:pointer;
+}
+#sim-area .sim-text-button:hover{background:#e8eee4;border-color:#75987f}
+#sim-area .sim-pill{
+  display:inline-flex;
+  align-items:center;
+  padding:7px 11px;
+  background:#e7ede3;
+  border:1px solid #c5d3c0;
+  border-radius:2px;
+  font:600 10px/1.4 var(--mono,"IBM Plex Mono",monospace);
+  color:#3e624c;
+  max-width:100%;
+  overflow-wrap:anywhere;
+  white-space:normal;
+}
+#sim-area .sim-title{
+  display:flex;
+  align-items:flex-start;
+  justify-content:space-between;
+  gap:26px;
+  margin:0 0 24px;
+}
+#sim-area .sim-title>div{flex:1;min-width:0}
+#sim-area .sim-title h1{
+  max-width:890px;
+  font:500 clamp(40px,4.7vw,64px)/1.04 var(--serif,"Newsreader",Georgia,serif);
+  letter-spacing:-.045em;
+  color:#254133;
+  text-wrap:balance;
+  overflow-wrap:normal;
+  margin:0 0 17px;
+}
+#sim-area .sim-title p{
+  max-width:840px;
+  color:#617064;
+  font-size:14px;
+  line-height:1.7;
+  margin:0;
+}
+#sim-area .sim-title p strong{color:#2a503a}
+#sim-area .sim-live{
+  flex:0 0 auto;
+  align-self:flex-start;
+  display:inline-flex;
+  align-items:center;
+  gap:6px;
+  border:1px solid #c8dfc7;
+  padding:9px 11px;
+  border-radius:2px;
+  color:#2c7050;
+  background:#e9f4e8;
+  font:600 11px/1.3 var(--mono,"IBM Plex Mono",monospace);
+  white-space:nowrap;
+}
+#sim-area .sim-banner{
+  display:flex;
+  flex-direction:column;
+  gap:6px;
+  padding:16px 18px;
+  margin:0 0 22px;
+  border:1px solid #dac9ae;
+  border-left:4px solid #ad764c;
+  border-radius:2px;
+  background:#faf0e2;
+  color:#6a573c;
+}
+#sim-area .sim-banner strong{font-size:14px;color:#704d2d}
+#sim-area .sim-banner span{font-size:12px;line-height:1.6}
+#sim-area .sim-banner.payment,#sim-area .sim-banner.schedule{
+  border-color:#c7d9c6;border-left-color:#5c8d69;background:#ebf2e8;color:#42614b;
+}
+#sim-area .sim-banner.payment strong,#sim-area .sim-banner.schedule strong{color:#2e5d41}
+#sim-area .sim-summary{
+  display:grid;
+  grid-template-columns:repeat(4,minmax(0,1fr));
+  gap:0;
+  border:1px solid #d1d8cc;
+  background:#fffdf8;
+  margin:0 0 21px;
+  box-shadow:0 4px 24px rgba(37,60,40,.035);
+}
+#sim-area .sim-summary>div{
+  display:flex;
+  flex-direction:column;
+  gap:7px;
+  min-width:0;
+  min-height:107px;
+  padding:20px 18px;
+  border-right:1px solid #dce2d6;
+  border-top:3px solid #8fa990;
+}
+#sim-area .sim-summary>div:nth-child(2){border-top-color:#aa775a}
+#sim-area .sim-summary>div:nth-child(3){border-top-color:#b5a47c}
+#sim-area .sim-summary>div:nth-child(4){border-top-color:#6e9676;border-right:0}
+#sim-area .sim-summary span{
+  color:#6a7a6d;
+  font:500 10px/1.4 var(--mono,"IBM Plex Mono",monospace);
+  letter-spacing:.02em;
+  text-transform:uppercase;
+}
+#sim-area .sim-summary strong{
+  color:#2a4935;
+  font:500 clamp(17px,1.8vw,23px)/1.2 var(--serif,"Newsreader",Georgia,serif);
+  letter-spacing:-.015em;
+  overflow-wrap:anywhere;
+}
+#sim-area .sim-main{
+  display:grid;
+  grid-template-columns:minmax(0,1.5fr) minmax(0,1fr);
+  gap:18px;
+  align-items:start;
+}
+#sim-area .sim-left,#sim-area .sim-right{
+  display:grid;
+  grid-template-columns:minmax(0,1fr);
+  gap:17px;
+  align-content:start;
+}
+#sim-area .sim-card{
+  border:1px solid #d5dccf;
+  border-top:3px solid #a1b59b;
+  border-radius:3px;
+  background:#fffdf8;
+  padding:clamp(18px,2.4vw,27px);
+  box-shadow:none;
+  min-width:0;
+}
+#sim-area .sim-card h3{
+  font:500 clamp(24px,2.5vw,30px)/1.12 var(--serif,"Newsreader",Georgia,serif);
+  letter-spacing:-.035em;
+  color:#294838;
+  margin:9px 0 12px;
+}
+#sim-area .sim-card p{
+  font-size:13px;
+  line-height:1.68;
+  color:#627365;
+  margin:0 0 13px;
+}
+#sim-area .sim-card .sim-help{color:#667969;margin:0 0 18px}
+#sim-area .sim-actions{
+  display:grid;
+  grid-template-columns:repeat(2,minmax(0,1fr));
+  gap:9px;
+  margin:18px 0 0;
+}
+#sim-area .sim-btn,.sim-modal-backdrop .sim-btn{
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  min-width:0;
+  width:100%;
+  min-height:47px;
+  padding:12px 15px;
+  background:#28543d;
+  color:#fffdf6;
+  border:1px solid #28543d;
+  border-radius:3px;
+  text-align:center;
+  font:600 12px/1.4 var(--sans,"IBM Plex Sans",sans-serif);
+  white-space:normal;
+  overflow-wrap:anywhere;
+  text-decoration:none;
+  cursor:pointer;
+}
+#sim-area .sim-btn:hover,.sim-modal-backdrop .sim-btn:hover{background:#376b4d;border-color:#376b4d}
+#sim-area .sim-btn.secondary,.sim-modal-backdrop .sim-btn.secondary{
+  color:#315843;
+  border-color:#bdcfbc;
+  background:#f4f6ef;
+}
+#sim-area .sim-btn.secondary:hover,.sim-modal-backdrop .sim-btn.secondary:hover{
+  background:#e8eee4;
+  border-color:#85a489;
+}
+#sim-area .sim-btn:disabled,.sim-modal-backdrop .sim-btn:disabled{cursor:not-allowed;opacity:.54}
+#sim-area .sim-receipt{
+  display:flex;
+  flex-direction:column;
+  gap:6px;
+  background:#e8f1e6;
+  color:#345d43;
+  padding:13px 15px;
+  border-left:3px solid #5f9272;
+  margin-top:16px;
+  font-size:12px;
+}
+#sim-area .sim-receipt strong{color:#24563a}
+#sim-area .sim-schedules{display:grid;grid-template-columns:1fr;gap:0;border-top:1px solid #e1e6db}
+#sim-area .sim-schedule{
+  display:grid;
+  grid-template-columns:minmax(0,.75fr) minmax(0,1fr);
+  align-items:baseline;
+  gap:5px 13px;
+  min-width:0;
+  padding:14px 0;
+  border-bottom:1px solid #e1e6db;
+}
+#sim-area .sim-schedule span{
+  font:600 12px/1.35 var(--sans,"IBM Plex Sans",sans-serif);
+  color:#516a56;
+}
+#sim-area .sim-schedule strong{
+  font:500 19px/1.2 var(--serif,"Newsreader",Georgia,serif);
+  color:#314e3b;
+  overflow-wrap:anywhere;
+}
+#sim-area .sim-schedule small{
+  grid-column:2;
+  color:#657668;
+  font:400 11px/1.5 var(--mono,"IBM Plex Mono",monospace);
+  overflow-wrap:anywhere;
+}
+#sim-area .sim-schedule.cancelled strong{color:#915b47}
+#sim-area .sim-schedules+.sim-help{margin:14px 0 0}
+#sim-area .sim-timeline{
+  display:flex;
+  flex-direction:column;
+  gap:0;
+  border-left:2px solid #ced9cb;
+  margin:15px 0 0 4px;
+}
+#sim-area .sim-timeline article{
+  position:relative;
+  min-width:0;
+  padding:0 0 18px 19px;
+}
+#sim-area .sim-timeline article:before{
+  content:"";
+  position:absolute;
+  width:9px;height:9px;left:-6px;top:5px;
+  background:#a97552;
+  border:2px solid #fffdf8;
+  border-radius:50%;
+}
+#sim-area .sim-timeline article strong{display:block;color:#375440;font-size:13px;line-height:1.45}
+#sim-area .sim-timeline article p{font-size:12px;margin:6px 0}
+#sim-area .sim-timeline article small{
+  display:block;color:#778479;font:400 10px/1.55 var(--mono,"IBM Plex Mono",monospace);
+}
+#sim-area .sim-card-head{
+  display:flex;
+  justify-content:space-between;
+  align-items:flex-start;
+  flex-wrap:wrap;
+  gap:10px 14px;
+  margin:0 0 10px;
+}
+#sim-area .sim-card-head h3{margin-bottom:0}
+#sim-area .sim-card-head .sim-pill{margin-left:3px;vertical-align:middle}
+#sim-area .sim-feed{
+  display:flex;
+  flex-direction:column;
+  gap:9px;
+  margin:15px 0 0;
+}
+#sim-area .sim-message{
+  padding:14px 15px;
+  border:1px solid #e1e6d9;
+  border-left:3px solid #c4d1c2;
+  border-radius:2px;
+  background:#f7f8f2;
+}
+#sim-area .sim-message.unread{
+  border-left-color:#aa7451;
+  border-color:#d9d7bd;
+  border-left-width:3px;
+  background:#fff8ea;
+}
+#sim-area .sim-message strong{
+  display:block;
+  color:#304f3a;
+  font-size:12px;
+  line-height:1.5;
+}
+#sim-area .sim-message p{font-size:12px;line-height:1.55;margin:6px 0}
+#sim-area .sim-message small{color:#758378;font:400 10px/1.45 var(--mono,"IBM Plex Mono",monospace)}
+#sim-area .sim-empty{
+  color:#677c6b;
+  font-size:12px;
+  line-height:1.7;
+  padding:8px 0;
+}
+#sim-area .sim-right .sim-card:last-child>p{
+  padding:9px 0;
+  margin:0;
+  border-bottom:1px solid #e7eae1;
+}
+#sim-area .sim-right .sim-card:last-child>p:last-child{border:0}
+#sim-area :where(.sim-btn,.sim-text-button):focus-visible,
+.sim-modal-backdrop :where(button,input,select,textarea):focus-visible{
+  outline:3px solid #b88b61;
+  outline-offset:2px;
+}
+/* Simulation confirmation and input modals — above navbar, menu, and guide. */
+.sim-modal-backdrop{
+  position:fixed;
+  inset:0;
+  z-index:130;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  overflow-y:auto;
+  padding:clamp(12px,3vw,28px);
+  padding-bottom:calc(15px + env(safe-area-inset-bottom,0px));
+  background:rgba(25,43,33,.65);
+}
+.sim-modal-backdrop .sim-modal{
+  position:relative;
+  min-width:0;
+  width:min(530px,100%);
+  max-height:calc(100dvh - 28px);
+  overflow:auto;
+  padding:clamp(22px,4vw,32px);
+  border:1px solid #c7d5c5;
+  border-top:5px solid #a76f4d;
+  border-radius:3px;
+  background:#fffdf8;
+  color:#294535;
+  box-shadow:0 25px 80px rgba(18,43,29,.28);
+}
+.sim-modal-backdrop .sim-close{
+  position:absolute;
+  right:12px;top:12px;
+  width:38px;height:38px;
+  display:grid;place-items:center;
+  font:400 25px/1 var(--sans,"IBM Plex Sans",sans-serif);
+  border:1px solid #d1ddcf;
+  background:#f3f5eb;color:#395d45;
+  border-radius:2px;
+  cursor:pointer;
+}
+.sim-modal-backdrop .sim-eyebrow{
+  display:block;max-width:calc(100% - 45px);
+  margin:0 0 10px;
+  font:600 10px/1.45 var(--mono,"IBM Plex Mono",monospace);
+  color:#a06140;
+  letter-spacing:.07em;
+}
+.sim-modal-backdrop .sim-modal h2{
+  font:500 clamp(28px,4vw,37px)/1.12 var(--serif,"Newsreader",Georgia,serif);
+  color:#284936;
+  letter-spacing:-.03em;
+  margin:0 42px 12px 0;
+}
+.sim-modal-backdrop .sim-modal>p{
+  color:#607163;
+  font-size:13px;
+  line-height:1.65;
+  margin:0 0 20px;
+}
+.sim-modal-backdrop #sim-form{display:grid;gap:13px;min-width:0}
+.sim-modal-backdrop #sim-form>label{
+  display:flex;flex-direction:column;gap:7px;
+  font-size:12px;font-weight:700;color:#365844;
+  min-width:0;
+}
+.sim-modal-backdrop #sim-form :where(select,input,textarea){
+  display:block;
+  width:100%;max-width:100%;min-width:0;
+  min-height:43px;
+  padding:10px 11px;
+  border:1px solid #c1d1bf;
+  border-radius:3px;
+  background:#fffefb;
+  color:#294232;
+  font:400 13px/1.5 var(--sans,"IBM Plex Sans",sans-serif);
+}
+.sim-modal-backdrop #sim-form textarea{min-height:100px;resize:vertical}
+.sim-modal-backdrop .sim-form-actions{display:flex;flex-wrap:wrap;gap:9px;margin-top:8px}
+.sim-modal-backdrop .sim-form-actions .sim-btn{flex:1 1 160px}
+.sim-modal-backdrop .sim-error{
+  color:#984d42;background:#faede7;border-left:3px solid #bf6756;
+  padding:10px 12px;font-size:12px;
+}
+@media(max-width:1100px){
+  #sim-area .sim-main{grid-template-columns:minmax(0,1.25fr) minmax(0,1fr)}
+  #sim-area .sim-actions{grid-template-columns:1fr}
+  #sim-area .sim-title h1{font-size:clamp(38px,4.5vw,52px)}
+}
+@media(max-width:800px){
+  #sim-area .sim-main{grid-template-columns:minmax(0,1fr);gap:16px}
+  #sim-area .sim-summary{grid-template-columns:repeat(2,minmax(0,1fr))}
+  #sim-area .sim-summary>div:nth-child(2){border-right:0}
+  #sim-area .sim-summary>div:nth-child(-n+2){border-bottom:1px solid #dce2d6}
+  #sim-area .sim-summary>div:nth-child(3){border-top-color:#b5a47c}
+  #sim-area .sim-summary>div:nth-child(4){border-top-color:#6e9676}
+  #sim-area .sim-title{display:block}
+  #sim-area .sim-title h1{font-size:clamp(38px,7vw,52px)}
+  #sim-area .sim-live{margin-top:16px}
+  #sim-area .sim-actions{grid-template-columns:repeat(2,minmax(0,1fr))}
+}
+@media(max-width:580px){
+  #sim-area{
+    padding:21px 14px calc(115px + env(safe-area-inset-bottom,0px));
+  }
+  #sim-area .sim-top{align-items:flex-start;gap:10px;margin-bottom:20px;padding-bottom:15px}
+  #sim-area .sim-top-actions{width:100%;justify-content:space-between;gap:8px}
+  #sim-area .sim-top .sim-eyebrow{font-size:9px}
+  #sim-area .sim-top-actions .sim-text-button{min-height:42px;flex:1 1 auto;text-align:center}
+  #sim-area .sim-top-actions .sim-pill{flex:0 1 auto;max-width:60%}
+  #sim-area .sim-title{margin-bottom:20px}
+  #sim-area .sim-title h1{font-size:clamp(34px,9vw,44px);line-height:1.09;letter-spacing:-.045em;margin-bottom:12px}
+  #sim-area .sim-title p{font-size:13px;line-height:1.62}
+  #sim-area .sim-live{font-size:10px;padding:7px 10px}
+  #sim-area .sim-summary{margin-bottom:15px}
+  #sim-area .sim-summary>div{padding:15px 12px;min-height:92px;gap:8px}
+  #sim-area .sim-summary strong{font-size:20px;line-height:1.19}
+  #sim-area .sim-summary span{font-size:9px}
+  #sim-area .sim-card{padding:19px 16px}
+  #sim-area .sim-card h3{font-size:27px}
+  #sim-area .sim-card .sim-help{font-size:12px}
+  #sim-area .sim-actions{grid-template-columns:minmax(0,1fr);gap:9px}
+  #sim-area .sim-btn{min-height:46px;padding:12px 14px;font-size:13px}
+  #sim-area .sim-schedule{grid-template-columns:minmax(0,.72fr) minmax(0,1fr);gap:4px 11px}
+  #sim-area .sim-schedule strong{font-size:18px}
+  #sim-area .sim-schedule small{font-size:10px}
+  #sim-area .sim-main{gap:14px}
+  #sim-area .sim-left,#sim-area .sim-right{gap:14px}
+  .sim-modal-backdrop{align-items:center;padding:12px}
+  .sim-modal-backdrop .sim-modal{padding:24px 18px;max-height:calc(100dvh - 24px)}
+}
+@media(max-width:360px){
+  #sim-area{padding-left:11px;padding-right:11px}
+  #sim-area .sim-title h1{font-size:34px}
+  #sim-area .sim-summary strong{font-size:17px}
+  #sim-area .sim-schedule{grid-template-columns:minmax(0,1fr)}
+  #sim-area .sim-schedule small{grid-column:1}
+  #sim-area .sim-card{padding:16px 13px}
+  #sim-area .sim-top-actions .sim-pill{font-size:9px;max-width:55%}
+}
+@media(prefers-reduced-motion:reduce){
+  #sim-area *, .sim-modal-backdrop *{scroll-behavior:auto!important;animation:none!important;transition:none!important}
+}
