@@ -9,6 +9,8 @@ on:
       - "public/field-notes.css"
       - "public/qa-bench.html"
       - "tests/browser_brand_ux.py"
+      - "public/sample-data.js"
+      - "tests/browser_sample_data.py"
       - "public/app.js"
       - "public/ops_ui.js"
       - "tests/browser_mobile_ux.py"
@@ -42,6 +44,15 @@ jobs:
           if-no-files-found: warn
       - name: Verify shared branding across operations storefront and QA
         run: python tests/browser_brand_ux.py
+      - name: Check one-click test data in dynamic forms and message boxes
+        run: python tests/browser_sample_data.py
+      - name: Upload sample-form screenshots
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: frameops-sample-form-evidence
+          path: artifacts/sample-inputs/
+          if-no-files-found: warn
       - name: Upload branded page responsive screenshots
         if: always()
         uses: actions/upload-artifact@v4
