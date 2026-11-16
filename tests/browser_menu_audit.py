@@ -140,6 +140,10 @@ def audit(browser,width,height):
             report.append(result)
             if result["contentWidth"]>result["documentWidth"]+3:
                 failures.append(f"job-{tab}: overflow")
+            if width<=390 and result["offscreenActions"]:
+                failures.append(f"job-{tab}: hidden mobile tab/action {result['offscreenActions']}")
+            if width<=390 and page.locator('.job-tabs .job-tab').count()!=5:
+                failures.append(f"job-{tab}: all five job tabs must remain visible")
             if width in (320,390,1440):
                 page.screenshot(path=str(OUT/f"job-{tab}-{width}.png"),full_page=True,timeout=30000)
 
