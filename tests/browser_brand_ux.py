@@ -63,9 +63,9 @@ def assess_brand(page, width, height):
         page.locator('.sidebar [data-nav="storefront"]').click()
     else:
         page.locator('.sidebar [data-nav="storefront"]').click()
-    page.locator(".st-hero h1").first.wait_for(timeout=15000)
-    assert page.locator(".st-product").count() >= 1
-    assert "Newsreader" in page.locator(".st-hero h1").evaluate(
+    page.locator(".ops-storefront .ops-store-hero h2").first.wait_for(timeout=15000)
+    assert page.locator(".ops-storefront .ops-products article").count() >= 3
+    assert "Newsreader" in page.locator(".ops-store-hero h2").evaluate(
         "(el) => getComputedStyle(el).fontFamily"
     )
     no_overflow(page, width, "Storefront")
