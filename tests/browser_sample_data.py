@@ -48,6 +48,7 @@ def run_case(browser, width, height):
     page.locator('.sample-load-chat-toolbar .sample-load-button').click()
     assert "Front Desk" in page.locator('#ops-guide-input').input_value()
     assert page.locator('#ops-guide-form button[type="submit"]').count() == 1
+    page.locator('#ops-guide-close').click()
 
     # Business social settings: seven URL fields and their related toggles.
     if width <= 800:
