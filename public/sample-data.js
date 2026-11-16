@@ -92,7 +92,7 @@
       const choices={
         invoiceStatus:"Draft",ticketStatus:"Open",appointmentStatus:"Delayed",
         finance_update:"Pending",insurance_update:"Pending",permit_update:"Pending",
-        sim:"",manual:"Blocked",review:"Invited"
+        sim:"", "manual-form":"Blocked",review:"Invited"
       };
       const value=choices[kind]||"Draft";
       return (choose(value)||enabled[0]).value;
@@ -131,6 +131,7 @@
       if(kind==="service_request")return "Customer reports the patio door sticks in the lower track; schedule warranty inspection.";
       if(kind==="note")return "Sample internal update: measurements verified and proposal review assigned to Sales.";
       if(kind==="invoice")return "Illustrative deposit invoice for a fictional job; no payment has been collected.";
+      if(kind==="manual-form")return "SAMPLE ONLY — Chromium desktop; no independent test evidence was collected. Replace before reporting.";
       return EXAMPLES.notes;
     }
     if(key==="amount"){
