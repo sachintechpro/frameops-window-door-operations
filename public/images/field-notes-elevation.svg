@@ -1,0 +1,34 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 720 430" role="img" aria-labelledby="title desc">
+<title id="title">Window and door elevation — field notes</title>
+<desc id="desc">An original architectural elevation of a four-panel window and door unit, with drafting lines, measurement markers and a working drawing grid.</desc>
+<defs><pattern id="grid" width="28" height="28" patternUnits="userSpaceOnUse"><path d="M28 0H0V28" stroke="#6f8a73" stroke-width=".7" stroke-opacity=".22" fill="none"/></pattern></defs>
+<rect width="720" height="430" fill="none"/>
+<rect width="720" height="430" fill="url(#grid)"/>
+<g fill="none" stroke="#527763" stroke-width="2" stroke-linejoin="miter">
+<path d="M132 96H574 M132 88V104 M574 88V104 M130 96l12-8 M574 96l12-8"/>
+<path d="M95 125V358 M87 125H103 M87 358H103 M95 125l-8 13 M95 358l-8 13"/>
+<rect x="144" y="128" width="418" height="217" stroke-width="4"/>
+<rect x="162" y="146" width="383" height="182" stroke-width="2"/>
+<path d="M350 128V345 M369 146V328 M162 235H350" stroke-width="3"/>
+<path d="M179 163H332V218H179Z M179 252H332V311H179Z M386 164H526V311H386Z" stroke-width="1.5"/>
+<circle cx="509" cy="264" r="6" stroke="#b07848" stroke-width="3"/>
+<path d="M494 264H520" stroke="#b07848"/>
+<path d="M134 358H572 M144 364H562 M130 372H586" stroke-width="1"/>
+<path d="M357 104V360 M118 237H585" stroke-dasharray="6 9" stroke-opacity=".45"/>
+<path d="M144 117H183 M144 112V123 M183 112V123 M527 117H562 M527 112V123 M562 112V123" stroke="#b07848"/>
+<path d="M106 125V163 M101 125H111 M101 163H111 M106 318V358 M101 318H111 M101 358H111" stroke="#b07848"/>
+<path d="M584 123h29v29 M575 350h35v-27" stroke-opacity=".65"/>
+</g>
+<g fill="#4c7661" font-family="monospace" font-size="13" letter-spacing="2">
+<text x="144" y="68">FRAMEOPS  /  ELEVATION 01</text>
+<text x="352" y="408" text-anchor="middle">OPERATIONS  •  WORKING DRAWING</text>
+<text x="190" y="193">A</text><text x="400" y="193">B</text>
+<text x="607" y="154" fill="#9f6844">01</text>
+<text x="607" y="347" fill="#9f6844">02</text>
+</g>
+<g fill="none" stroke="#b07848" stroke-width="2">
+<path d="M579 162h46l17-13 M580 333h45l17 12"/>
+<circle cx="642" cy="149" r="3" fill="#b07848"/>
+<circle cx="642" cy="345" r="3" fill="#b07848"/>
+</g>
+</svg>
