@@ -537,3 +537,71 @@ body.qa-has-rail .qa-section-head>*{position:relative;z-index:1}
 @media(max-width:650px){
   body.qa-has-rail .qa-section-head:after{display:none}
 }
+
+
+/* Operational storefront — current customer storefront view opened from the sidebar.
+   Keep the role-specific experience and original controls unchanged. */
+body:not(.qa-has-rail) .ops-store-hero{
+  background:#e8eee3;
+  border:1px solid #cbd8c9;
+  border-left:5px solid #a46b4e;
+  border-radius:3px;
+  position:relative;
+  isolation:isolate;
+}
+body:not(.qa-has-rail) .ops-store-hero:before{
+  content:"";
+  position:absolute;inset:0;
+  background:url("/images/field-notes-elevation.svg") 18% center / 50% auto no-repeat;
+  opacity:.07;
+  pointer-events:none;
+  z-index:0;
+}
+body:not(.qa-has-rail) .ops-store-hero>*{position:relative;z-index:1}
+body:not(.qa-has-rail) .ops-store-hero h2{
+  font:500 clamp(30px,3.5vw,51px)/1.08 var(--serif);
+  color:#274634;
+  letter-spacing:-.045em;
+}
+body:not(.qa-has-rail) .ops-store-hero p{color:#596e5e}
+body:not(.qa-has-rail) .ops-hero-note{color:#6d7d6f}
+body:not(.qa-has-rail) .ops-products article{
+  background:#fffdf8;
+  border:1px solid #d7dcd0;
+  border-top:3px solid #98b399;
+  border-radius:3px;
+}
+body:not(.qa-has-rail) .ops-products article:nth-child(2){border-top-color:#b78761}
+body:not(.qa-has-rail) .ops-products article:nth-child(3){border-top-color:#a69b75}
+body:not(.qa-has-rail) .ops-products h3{
+  font:500 24px/1.12 var(--serif);
+  letter-spacing:-.02em;color:#31513b;
+}
+body:not(.qa-has-rail) .ops-products p{color:#66776a}
+body:not(.qa-has-rail) .ops-products button{color:#97573c}
+body:not(.qa-has-rail) .ops-product-icon{
+  background:#e7eee4;color:#477054;border-radius:2px;
+}
+body:not(.qa-has-rail) .ops-window-art{
+  background:#f7f5e9;
+  border-color:#f8f7ef;
+  border-radius:2px;
+  box-shadow:0 8px 24px #17342719;
+}
+body:not(.qa-has-rail) .ops-window-art:before,
+body:not(.qa-has-rail) .ops-window-art:after{background:#f8f7ef}
+body:not(.qa-has-rail) .ops-window-sky{
+  background:linear-gradient(155deg,#a0b9a0,#eff0da 66%,#c5d1b8);
+}
+body:not(.qa-has-rail) .ops-window-sky span{background:#b3c6a5}
+body:not(.qa-has-rail) .ops-window-sky span+span{background:#86a68f}
+body:not(.qa-has-rail) .ops-track select{
+  border-color:#c9d6c7;background:#fffdf8;border-radius:2px;color:#315542;
+}
+body:not(.qa-has-rail) .ops-track label,
+body:not(.qa-has-rail) .ops-track p{color:#63776a}
+@media(max-width:670px){
+  body:not(.qa-has-rail) .ops-store-hero:before{display:none}
+  body:not(.qa-has-rail) .ops-store-hero h2{font-size:clamp(30px,7vw,40px)}
+  body:not(.qa-has-rail) .ops-products h3{font-size:22px}
+}
