@@ -82,14 +82,17 @@ def inspect_page(browser, width, height):
     page.locator('[data-probe="health"]').click()
     output = page.locator("#probe-output")
     output.wait_for()
+    page.wait_for_function("document.getElementById('probe-output').textContent.includes('\"http_status\": 200')")
     assert '"http_status": 200' in output.inner_text(), output.inner_text()
     assert '"service_status": "ok"' in output.inner_text(), output.inner_text()
 
     page.locator('[data-probe="missing"]').click()
+    page.wait_for_function("document.getElementById('probe-output').textContent.includes('\"http_status\": 404')")
     assert '"http_status": 404' in output.inner_text(), output.inner_text()
     assert "Job not found" in output.inner_text(), output.inner_text()
 
     page.locator('[data-probe="bootstrap"]').click()
+    page.wait_for_function("document.getElementById('probe-output').textContent.includes('\"top_level_fields\"')")
     result = json.loads(output.inner_text())
     assert result["http_status"] == 200, result
     assert result["jobs"] >= 1 and result["workflow_stages"] >= 1, result
