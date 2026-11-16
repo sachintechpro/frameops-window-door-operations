@@ -60,9 +60,9 @@ def assess_brand(page, width, height):
     # Preserve the original navigation, storefront, and role behavior.
     if width <= 800:
         page.locator("#mobile-menu").click()
-        page.locator('[data-nav="storefront"]').click()
+        page.locator('.sidebar [data-nav="storefront"]').click()
     else:
-        page.locator('[data-nav="storefront"]').click()
+        page.locator('.sidebar [data-nav="storefront"]').click()
     page.locator(".st-hero h1").first.wait_for(timeout=15000)
     assert page.locator(".st-product").count() >= 1
     assert "Newsreader" in page.locator(".st-hero h1").evaluate(
