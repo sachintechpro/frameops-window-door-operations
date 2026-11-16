@@ -1012,3 +1012,46 @@ body:not(.qa-has-rail) #app .empty-state p{color:#647668}
     outline-offset:2px;
   }
 }
+
+
+/* MOBILE JOB-TAB NAVIGATION — all five tabs visible without sideways scrolling. */
+@media(max-width:670px){
+  body:not(.qa-has-rail) #app .job-tabs{
+    display:grid;
+    grid-template-columns:repeat(2,minmax(0,1fr));
+    gap:8px;
+    max-width:100%;
+    min-width:0;
+    overflow:visible;
+    margin:16px 0;
+    border-bottom:0;
+    padding:0;
+  }
+  body:not(.qa-has-rail) #app .job-tab{
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    width:100%;
+    min-width:0;
+    min-height:45px;
+    padding:11px 9px;
+    white-space:normal;
+    text-align:center;
+    background:#f1f4eb;
+    color:#3f604b;
+    border:1px solid #cbd9c9;
+    border-radius:2px;
+    font-size:12px;
+    line-height:1.35;
+  }
+  body:not(.qa-has-rail) #app .job-tab:hover{
+    background:#e7eee5;
+    border-color:#87a48a;
+  }
+  body:not(.qa-has-rail) #app .job-tab.active{
+    color:#fffaf0;
+    background:#28553d;
+    border:1px solid #28553d;
+    font-weight:700;
+  }
+}
