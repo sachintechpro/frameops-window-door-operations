@@ -50,7 +50,7 @@ def inspect_page(browser, width, height):
     assert "From business problem to working deployment." in page.locator("h1").inner_text()
     assert page.locator("[role=tab]").count() == 8
     assert page.locator("[role=tabpanel]").count() == 8
-    assert page.locator("svg #plate-title").inner_text() == "FrameOps assembly drawing"
+    assert page.locator("svg #plate-title").text_content() == "FrameOps assembly drawing"
 
     client = page.evaluate("document.documentElement.clientWidth")
     scroll = page.evaluate("document.documentElement.scrollWidth")
@@ -79,7 +79,7 @@ def inspect_page(browser, width, height):
 
     # Read-only integration checks through live local endpoints, not mocked data.
     page.locator('.tab[data-target="engineering"]').click()
-    page.locator('[data-probe="health"]').click()
+    page.locator('#engineering [data-probe="health"]').click()
     output = page.locator("#probe-output")
     output.wait_for()
     page.wait_for_function("document.getElementById('probe-output').textContent.includes('\"http_status\": 200')")
