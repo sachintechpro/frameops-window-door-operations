@@ -6,6 +6,9 @@ on:
       - "public/index.html"
       - "public/fde-implementation.html"
       - "public/styles.css"
+      - "public/field-notes.css"
+      - "public/qa-bench.html"
+      - "tests/browser_brand_ux.py"
       - "public/app.js"
       - "public/ops_ui.js"
       - "tests/browser_mobile_ux.py"
@@ -36,6 +39,15 @@ jobs:
         with:
           name: frameops-fde-responsive-evidence
           path: artifacts/fde-ux/
+          if-no-files-found: warn
+      - name: Verify shared branding across operations storefront and QA
+        run: python tests/browser_brand_ux.py
+      - name: Upload branded page responsive screenshots
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: frameops-field-notes-visual-evidence
+          path: artifacts/field-notes-brand/
           if-no-files-found: warn
       - name: Upload mobile/desktop screenshots as test evidence
         if: always()
