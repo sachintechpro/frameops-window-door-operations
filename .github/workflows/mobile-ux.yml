@@ -7,6 +7,7 @@ on:
       - "public/journey.css"
       - "tests/browser_journey_ux.py"
       - "tests/browser_menu_audit.py"
+      - "public/menu-layout.js"
       - "public/fde-implementation.html"
       - "public/styles.css"
       - "public/field-notes.css"
